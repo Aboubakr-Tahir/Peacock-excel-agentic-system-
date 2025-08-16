@@ -1,7 +1,7 @@
-import sys, os
+import sys, os, shutil
 from dotenv import load_dotenv
 from agents import AgentManager
-from config import OrchestratorDecision, todo
+from config import OrchestratorDecision, todo ,repo_path, excel_path, profiler_notes_path, workspace_path, output_path
 from PreProcessing import run_preprocessing
 from agent_runner import run_agents
 
@@ -11,12 +11,17 @@ os.environ["OPENAI_API_KEY"] = key
 manager = AgentManager("gpt-4o")
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
+    shutil.rmtree(output_path) if os.path.exists(output_path) else None
     query = input("Hello I am PeaQock Manus IA Agent how can i help you today?\n===> ")
-    print("Preprocessing ...\n")
+    delivery_agent = manager.get_delivery_agent(query=query, repo_path=repo_path, excel_path=excel_path, profiler_notes_path=profiler_notes_path, workspace_path=workspace_path).run()
+    output = delivery_agent.content.chosen_path
+    print("the path of the output is: ", output)
+
+    print("Preprocessing ...")
     run_preprocessing(manager)
     
-    print("\n\n========================================================================")
+    print("========================================================================")
     print("Running Planner Agent: creating todo.md ...")
     planner = manager.get_planner_agent(query=query, todo=todo).run()
     print("Planner Agent finished\nOrchestrator is now running the plan ...")
@@ -36,3 +41,6 @@ if __name__ == "__main__":
         if decision.agent_to_call == 'complete':
             print("\nAll tasks are complete. Workflow finished.")
             break
+    
+    final = "output"; os.makedirs(final, exist_ok=True)
+    shutil.copy(output, final) if os.path.isfile(output) else shutil.copytree(output, os.path.join(final, os.path.basename(output)), dirs_exist_ok=True)

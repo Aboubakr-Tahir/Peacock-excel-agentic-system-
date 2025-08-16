@@ -469,25 +469,24 @@ class AgentManager:
                 f"- summary_path: Full path to the generated summary file (should be {summary_path})",
             ]
         )
-        
-    def get_delivery_agent(self, repo_path: Path, excel_path: Path, profiler_notes_path: Path, workspace_path: Path):
+
+    def get_delivery_agent(self, query: str, repo_path: Path, excel_path: Path, profiler_notes_path: Path, workspace_path: Path):
         return Agent(
             name="delivery_Agent",
             model=OpenAIChat(self.model_name, temperature=0.0),
-            tools=self.toolset,
             response_model=DeliveryResponse,
             #debug_mode=True,
             instructions = [
                 "You are a delivery agent that deliver the correct output to the user from a repo folder",
                 f"you will find all the files and folder in the {repo_path}",
-                "1.your work is the read the user query and know wich file to deliver to the user",
-                "2.if the user query is about:",
+                f"1.your work is the read the user {query} and know wich file to deliver to the user",
+                f"2.if the user {query} is about:",
                 f"cleaning -> select {cleaned_excel}",
                 f"summaries -> select {summary_path}",
-                f"plots requested by the user -> select {plot_output_path}", 
-                f"quering on the excel file, aggregating, doing analytical operations on the excel -> select {queries_path}", 
                 f"creating a pdf report -> select {report_path}",
+                f"whenever the user asks for report and add something focus just on the report and selecty {report_path}",
+                f"plots requested by the user -> select {plot_output_path}", 
+                f"quering on the excel file, aggregating, doing analytical operations on the excel -> select {queries_path}",              
                 "3.put the path of the selected file or folder in chosen_path"
-                f"3. after selecting the correct file or folder copy it and put it in the {output_path} folder"
             ]
         )
