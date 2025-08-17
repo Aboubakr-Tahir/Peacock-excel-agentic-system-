@@ -1,4 +1,4 @@
-from config import excel_path, context_path, profiler_notes_path, review_notes_path, repo_path, media_json_path
+from config import excel_path, context_path, profiler_notes_path, review_notes_path, repo_path, media_json_path, workspace_path
 
 def run_preprocessing(manager):
     extractor = manager.get_data_extractor_agent()
@@ -31,4 +31,8 @@ def run_preprocessing(manager):
 
     workspace = manager.get_workspace_agent(context_note_path=profiler_notes_path, context_path=context_path, repo_path=repo_path, media_json_path=media_json_path)
     workspace.run()
-    print("✅ The workspace is ready\n")
+    print("✅ The workspace is ready")
+    
+    summary_agent = manager.get_summary_agent(repo_path=repo_path, excel_path=excel_path, profiler_notes_path=profiler_notes_path, workspace_path=workspace_path)
+    summary_response = summary_agent.run()
+    print("✅ The Preprocessing is Done\n")
