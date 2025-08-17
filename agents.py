@@ -84,7 +84,7 @@ class AgentManager:
                 
                 "## Guiding Principles:",
                 "1.  *Delegate, Don't Micromanage:* Your tasks should describe what to achieve, not how to achieve it.",
-                "2.  *Think in Phases:* Structure the plan logically (e.g., cleaning and summarization always come first, reporting comes last).",
+                "2.  *Think in Phases:* Structure the plan logically (e.g., cleaning always come first, reporting comes last).",
                 "3.  *Be Specific and Actionable:* The user's original goal must be converted into a concrete task. Vague tasks like 'Analyze the data' or 'Extract insights' are forbidden.",
 
                 "## Example of a GOOD, HIGH-LEVEL plan (✅ THIS IS CORRECT):",
@@ -92,7 +92,6 @@ class AgentManager:
                 "### Phase 1: Data Preparation",
                 "- [ ] Clean and preprocess the dataset according to the user's instructions from the interaction phase.",
                 "### Phase 2: Analysis",
-                "- [ ] Summarize the excel file",
                 "- [ ] Fulfill the user's primary analysis request: 'Filter the data to find the top 10 products by sales in the North region.'",
                 "### Phase 3: Reporting",
                 "- [ ] Generate a PDF report summarizing the key findings from the analysis.",
@@ -402,7 +401,6 @@ class AgentManager:
                 "- Charts and plots (in charts/ and plots/ folders)",
                 "- Query results (in queries/ folder)",
                 "- Images and visualizations (in images/ folder)",
-                "- Important images to always add (in web_images/ folder)",
                 "- Workspace data (workspace.json)",
                 "Before generating, determine: does the user want a FULL report or only specific information?",
                 "RULES:",
@@ -412,7 +410,7 @@ class AgentManager:
                 "1. First, read the workspace.json and context_notes.txt files to understand the data context",
                 "2. Use list_available_visualizations tool to see all available plots, charts, and images",
                 f"3. PRIORITY: Include existing plots from {repo_path}/plots folder in the report",
-                f"4. Include any extracted images from {images_path} folder and {web_images} folder",
+                f"4. Include any extracted images from {images_path} folder",
                 "5. Create a comprehensive LaTeX report using proper_write_latex tool with filename 'report.tex'",
                 "6. ALWAYS include available plots using \\includegraphics commands in LaTeX",
                 "7. ALWAYS start with a summary that contain the same text in the {summary_path} file",
@@ -488,5 +486,6 @@ class AgentManager:
                 f"plots requested by the user -> select {plot_output_path}", 
                 f"quering on the excel file, aggregating, doing analytical operations on the excel -> select {queries_path}",              
                 "3.put the path of the selected file or folder in chosen_path"
+                "IMPORTANT: your choice should always priorities the report if found in the query"
             ]
         )

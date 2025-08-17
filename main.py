@@ -15,13 +15,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if __name__ == "__main__":
     shutil.rmtree(output_path) if os.path.exists(output_path) else None
     final = "repo"; os.makedirs(final, exist_ok=True)
+    
     query = input("Hello I am PeaQock Manus IA Agent how can i help you today?\n===> ")
     delivery_agent = manager.get_delivery_agent(query=query, repo_path=repo_path, excel_path=excel_path, profiler_notes_path=profiler_notes_path, workspace_path=workspace_path).run()
     output = delivery_agent.content.chosen_path
     print("the path of the output is: ", output)
 
-    # print("Preprocessing ...")
-    # run_preprocessing(manager)
+    print("Preprocessing ...")
+    run_preprocessing(manager)
     
     print("========================================================================")
     print("Running Planner Agent: creating todo.md ...")
@@ -48,4 +49,4 @@ if __name__ == "__main__":
         final = "output"; os.makedirs(final, exist_ok=True)
         shutil.copy(output, final) if os.path.isfile(output) else shutil.copytree(output, os.path.join(final, os.path.basename(output)), dirs_exist_ok=True)
     except FileNotFoundError as e:
-        print("❌ PeaQock Manus failed", e)
+        print("❌ PeaQock Manus failed")
