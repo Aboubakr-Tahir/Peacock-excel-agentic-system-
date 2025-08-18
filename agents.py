@@ -383,7 +383,7 @@ class AgentManager:
             ]
         )
 
-    def get_report_agent(self, repo_path: Path, charts_path: Path, images_path: Path, workspace_path: Path, context_note_path: Path, queries_path: Path, web_images: Path):
+    def get_report_agent(self, repo_path: Path, charts_path: Path, images_path: Path, workspace_path: Path, context_note_path: Path, queries_path: Path, web_images: Path, summary_path: Path):
         report_toolset = [read_file_utf8, save_file_utf8, google_images_search, excel_structure_parser, extract_and_analyze_charts_tool, extract_and_analyze_images_tool, analyze_extracted_image_content_tool, compile_latex, escape_latex, proper_write_latex, list_available_visualizations]
         return Agent(
             name="Report_Agent",
@@ -425,13 +425,38 @@ class AgentManager:
                 "- If chart extraction fails, still proceed with available plots and data",
                 "",
                 "REPORT STRUCTURE:",
-                "- Title: 'Product Quantity Analysis Report'",
-                "- Executive Summary",
-                "- Data Overview and Context", 
-                "- Detailed Analysis with Charts/Plots (ALWAYS include existing plots)",
-                "- Key Findings and Insights",
-                "- Conclusions and Recommendations",
-                "",
+                '''
+                ## Title Page
+                - **Report Title:**  
+                - **Company Name:** PeaQock  
+                - **Author:** PeaQock Manus Agent  
+                - **Date of Submission:**  
+                ---
+                
+                ## Executive Summary: ALWAYS include the summary from the summary.txt in the path: '{self.summary_path}'
+                ---
+                ## Table of Contents
+                1. Introduction  
+                2. Main Body  
+                3. Analysis and Discussion  
+                4. Conclusions   
+                ---
+                ## Introduction: **Objective:** Analysis of the provided Excel file 
+                ---
+                ## Main Body
+                - Data presentation  
+                - Analysis and discussion with clear headings and subheadings  
+                - Charts, tables, and visuals where necessary  
+                - Objective presentation of facts  
+                ---
+                ## Analysis and Discussion
+                - Interpretation of the findings  
+                - Comparison with benchmarks, goals, or competitors  
+                - Identification of problems, opportunities, or trends  
+                ---
+                ## Conclusions
+                - Key insights from the analysis and answer to the main problem raised in the introduction and the question asked by the user
+                '''
                 "RESPONSE FORMAT:",
                 "You must return a structured response with:",
                 "- status: 'success' if report generated successfully, 'failure' if any errors occurred",
@@ -444,6 +469,7 @@ class AgentManager:
                 "- If any files are missing, continue with available data and note in summary",
                 "- If LaTeX compilation fails, return status='failure' with error details",
                 "- Always provide meaningful feedback about what succeeded or failed"
+                
             ]
         )
     
@@ -487,5 +513,6 @@ class AgentManager:
                 f"quering on the excel file, aggregating, doing analytical operations on the excel -> select {queries_path}",              
                 "3.put the path of the selected file or folder in chosen_path"
                 "IMPORTANT: your choice should always priorities the report if found in the query"
+                "Whenever you find the word report in the {query} -> select {report_path}"
             ]
         )

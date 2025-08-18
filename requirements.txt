@@ -128,3 +128,4 @@ nbformat
 kaleido
 serpapi
 xlsxwriter
+weasyprint
