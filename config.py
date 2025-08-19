@@ -2,25 +2,25 @@ from pydantic import BaseModel , Field
 from pathlib import Path
 #Paths Configuration:
 repo_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo")
-scripts_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\scripts")
-excel_path = list(Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo").glob("*.xlsx"))[0]
-context_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\context.json")
-profiler_notes_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\context_notes.txt")
-review_notes_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\review_notes.txt")
-todo = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\todo.md")
-cleaned_excel = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\cleaned_excel.xlsx")
-filter_output_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\queries")
-plot_output_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\plots")
-web_images = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\web_images")
-media_json_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\media.json")
-images_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\images")
-charts_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\charts")
-latex_output_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\latex_outputs")
+scripts_path = repo_path / "scripts"
+excel_path = repo_path / "data.xlsx"
+context_path = repo_path / "context.json"
+profiler_notes_path = repo_path / "context_notes.txt"
+review_notes_path = repo_path / "review_notes.txt"
+todo = repo_path / "todo.md"
+cleaned_excel = repo_path / "cleaned_excel.xlsx"
+filter_output_path = repo_path / "queries"
+plot_output_path = repo_path / "plots"
+web_images = repo_path / "web_images"
+media_json_path = repo_path / "media.json"
+images_path = repo_path / "images"
+charts_path = repo_path / "charts"
+latex_output_path = repo_path / "latex_outputs"
 tectonic_path= Path(r"C:\tectonic\tectonic.exe")
-workspace_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\workspace.json")
-queries_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\queries")
-summary_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\summary.txt")
-report_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo\report.pdf")
+workspace_path = repo_path / "workspace.json"
+queries_path = repo_path / "queries"
+summary_path = repo_path / "summary.txt"
+report_path = repo_path / "report.pdf"
 output_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\output")
 
 paths=[repo_path, scripts_path, excel_path, context_path, profiler_notes_path, review_notes_path, todo, cleaned_excel, filter_output_path, plot_output_path, web_images, media_json_path, images_path, charts_path, latex_output_path, tectonic_path, workspace_path, queries_path, summary_path]

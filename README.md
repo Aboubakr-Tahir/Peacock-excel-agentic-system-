@@ -50,7 +50,7 @@
 ## Usage
 **Run this command in your terminal**
 ```bash
-python main.py
+python api.py
 ```
 
 The agent will start an interactive session where you can ask questions and request analysis.

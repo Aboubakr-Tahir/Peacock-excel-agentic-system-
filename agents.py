@@ -5,6 +5,7 @@ from agno.models.openai import OpenAIChat
 from config import OrchestratorDecision, CleanerResponse, FilterResponse, PlotResponse, WebImageWords, ReportResponse, SummaryResponse, DeliveryResponse
 from config import repo_path, scripts_path, profiler_notes_path, excel_path, summary_path, cleaned_excel, plot_output_path, queries_path, report_path, output_path
 from pathlib import Path
+import os
 
 class AgentManager:
     def __init__(self, model_name: str):
@@ -92,7 +93,7 @@ class AgentManager:
                 "### Phase 1: Data Preparation",
                 "- [ ] Clean and preprocess the dataset according to the user's instructions from the interaction phase.",
                 "### Phase 2: Analysis",
-                "- [ ] Fulfill the user's primary analysis request: 'Filter the data to find the top 10 products by sales in the North region.'",
+                "- [ ] Filter the data to find the top 10 products by sales in the North region.",
                 "### Phase 3: Reporting",
                 "- [ ] Generate a PDF report summarizing the key findings from the analysis.",
                 "",
@@ -294,8 +295,8 @@ class AgentManager:
                 "4. Save the plot as an HTML file to maintain interactivity",
                 f"5. ALSO export a static image of the same plot (PNG) to the {output_path} folder",
                 "6. Your script MUST end with BOTH:",
-                f"- fig.write_html('{output_path}/plot_name.html')",
-                f"- fig.write_image('{output_path}/plot_name.png')",
+                f"- fig.write_html('{output_path}/plot.html')",
+                f"- fig.write_image('{output_path}/plot.png')",
 
                 "## STEP 2 (After script execution): Provide Structured Response",
                 "ONLY after the Python script has successfully executed, return a PlotResponse with:",
@@ -383,7 +384,7 @@ class AgentManager:
             ]
         )
 
-    def get_report_agent(self, repo_path: Path, charts_path: Path, images_path: Path, workspace_path: Path, context_note_path: Path, queries_path: Path, web_images: Path, summary_path: Path):
+    def get_report_agent(self, repo_path: Path, images_path: Path):
         report_toolset = [read_file_utf8, save_file_utf8, google_images_search, excel_structure_parser, extract_and_analyze_charts_tool, extract_and_analyze_images_tool, analyze_extracted_image_content_tool, compile_latex, escape_latex, proper_write_latex, list_available_visualizations]
         return Agent(
             name="Report_Agent",
@@ -407,13 +408,13 @@ class AgentManager:
                 "- If the user wants a FULL report: write a detailed report of at least 1000 words, covering all available data, charts, and images.",
                 "- If the user asks for SPECIFIC information: only include that information. Keep it concise and exclude unrelated data.",
                 "WORKFLOW:",
-                "1. First, read the workspace.json and context_notes.txt files to understand the data context",
+                f"1. First, read the {repo_path}/workspace.json and {repo_path}/context_notes.txt files to understand the data context",
                 "2. Use list_available_visualizations tool to see all available plots, charts, and images",
                 f"3. PRIORITY: Include existing plots from {repo_path}/plots folder in the report",
                 f"4. Include any extracted images from {images_path} folder",
                 "5. Create a comprehensive LaTeX report using proper_write_latex tool with filename 'report.tex'",
                 "6. ALWAYS include available plots using \\includegraphics commands in LaTeX",
-                "7. ALWAYS start with a summary that contain the same text in the {summary_path} file",
+                f"7. ALWAYS start with a summary that contain the same text in the {repo_path}/summary.txt file",
                 "8. Use escape_latex tool to properly escape any text from JSON files before inserting into LaTeX",
                 f"9. Compile the report using compile_latex('report.tex') to generate PDF in {repo_path}",
                 "",
@@ -433,7 +434,7 @@ class AgentManager:
                 - **Date of Submission:**  
                 ---
                 
-                ## Executive Summary: ALWAYS include the summary from the summary.txt in the path: '{self.summary_path}'
+                f"## Executive Summary: ALWAYS include the summary from the summary.txt in the path: '{repo_path}/summary.txt'",
                 ---
                 ## Table of Contents
                 1. Introduction  
@@ -482,11 +483,11 @@ class AgentManager:
             #debug_mode=True,
             instructions = [
                 "You are an autonomous Summarization Specialist agent that creates a deep and narrative-style summary from the analyses done earlier.",
-                "Your job is to read all the content you will find in the {repo_path} to understand the exact content of the Excel file.",
+                f"Your job is to read all the content you will find in the {repo_path} to understand the exact content of the Excel file.",
                 f"Start by reading the {excel_path} file and then focus more on those two files: {profiler_notes_path} and {workspace_path}.",
                 "Write the output as ONE long, flowing paragraph, like an executive summary. Do NOT use bullet points, headers, or markdown formatting.",
                 "The paragraph must describe: the most relevant sheet (name, rows, columns, and main purpose), the important columns and what they represent, any anomalies or trends, the presence of images/charts and what they illustrate, and finally why the file is important and how it can be valuable if improved with more consistent data.",
-                "Save this narrative summary in a txt file named 'summary.txt' inside {repo_path}.",
+                f"Save this narrative summary in a txt file named 'summary.txt' inside {repo_path}.",
                 "never stop improving, and never use the files name so instead of saying 'the food_sale excel' just say 'the excel file'",
                 "RESPONSE FORMAT:",
                 "- status: 'success' if summary.txt file was generated successfully, 'failure' if any errors occurred",
@@ -504,15 +505,20 @@ class AgentManager:
                 "You are a delivery agent that deliver the correct output to the user from a repo folder",
                 f"you will find all the files and folder in the {repo_path}",
                 f"1.your work is the read the user {query} and know wich file to deliver to the user",
+                "possible queries:",
+                    "'cleaner' handles: cleaning",
+                    "'summerizer' handles: summaries",
+                    "'plot' handles: plots requested by the user", 
+                    "'filter' handles: quering on the excel file, aggregating, doing analytical operations on the excel (top 10 products, etc.)", 
+                    "'reporter' handles: creating a pdf report",
                 f"2.if the user {query} is about:",
                 f"cleaning -> select {cleaned_excel}",
                 f"summaries -> select {summary_path}",
                 f"creating a pdf report -> select {report_path}",
                 f"whenever the user asks for report and add something focus just on the report and selecty {report_path}",
-                f"plots requested by the user -> select {plot_output_path}", 
-                f"quering on the excel file, aggregating, doing analytical operations on the excel -> select {queries_path}",              
+                f"if the user ask for plots -> select {os.path.join(plot_output_path, 'plot.html')}", 
+                f"filtering the excel file, aggregating, doing analytical operations on the excel -> select {queries_path}",              
                 "3.put the path of the selected file or folder in chosen_path"
                 "IMPORTANT: your choice should always priorities the report if found in the query"
-                "Whenever you find the word report in the {query} -> select {report_path}"
             ]
         )

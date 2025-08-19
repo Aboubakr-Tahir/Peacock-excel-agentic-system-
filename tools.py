@@ -15,7 +15,13 @@ SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 @tool(show_result=True)
 def read_file_utf8(file_name: str) -> str:
     try:
-        with open(repo_path / file_name, 'r', encoding='utf-8') as f:
+        # Handle both relative and absolute paths
+        if os.path.isabs(file_name):
+            file_path = file_name
+        else:
+            file_path = repo_path / file_name
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
             return f.read()
     except Exception as e:
         return f"Error reading file {file_name}: {e}"
@@ -23,7 +29,13 @@ def read_file_utf8(file_name: str) -> str:
 @tool(show_result=True)
 def save_file_utf8(file_name: str, contents: str) -> str:
     try:
-        with open(repo_path / file_name, 'w', encoding='utf-8') as f:
+        # Handle both relative and absolute paths
+        if os.path.isabs(file_name):
+            file_path = file_name
+        else:
+            file_path = repo_path / file_name
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
             f.write(contents)
         return f"Successfully saved to {file_name}"
     except Exception as e:

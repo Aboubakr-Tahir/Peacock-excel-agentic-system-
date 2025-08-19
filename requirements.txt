@@ -129,3 +129,4 @@ kaleido
 serpapi
 xlsxwriter
 weasyprint
+uvicorn

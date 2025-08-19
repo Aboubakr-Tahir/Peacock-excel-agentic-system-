@@ -1,4 +1,5 @@
-from config import excel_path, context_path, profiler_notes_path, review_notes_path, repo_path, media_json_path, workspace_path
+from config import excel_path, context_path, profiler_notes_path, review_notes_path, repo_path, media_json_path, workspace_path, summary_path
+import os
 
 def run_preprocessing(manager):
     extractor = manager.get_data_extractor_agent()
@@ -33,6 +34,11 @@ def run_preprocessing(manager):
     workspace.run()
     print("✅ The workspace is ready")
     
-    summary_agent = manager.get_summary_agent(repo_path=repo_path, excel_path=excel_path, profiler_notes_path=profiler_notes_path, workspace_path=workspace_path)
-    summary_response = summary_agent.run()
-    print("✅ The Preprocessing is Done\n")
+    summary_exist = False
+    while not summary_exist:
+        summary_agent = manager.get_summary_agent(repo_path=repo_path, excel_path=excel_path, profiler_notes_path=profiler_notes_path, workspace_path=workspace_path)
+        summary_response = summary_agent.run()
+        if os.path.isfile(summary_path):
+            summary_exist = True
+            print("✅ The Preprocessing is Done\n")
+        print("creating summary\n")
