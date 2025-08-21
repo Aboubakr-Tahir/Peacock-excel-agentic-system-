@@ -518,7 +518,7 @@ class AgentManager:
                 f"whenever the user asks for report and add something focus just on the report and selecty {report_path}",
                 f"if the user ask for plots -> select {os.path.join(plot_output_path, 'plot.html')}", 
                 f"filtering the excel file, aggregating, doing analytical operations on the excel -> select {queries_path}",              
-                "3.put the path of the selected file or folder in chosen_path"
+                "3.put the path of the selected file or folder in chosen_path",
                 "IMPORTANT: your choice should always priorities the report if found in the query"
             ]
         )

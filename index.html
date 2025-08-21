@@ -30,12 +30,18 @@
         }
 
         /* LAYOUT */
-        .app{display:grid; grid-template-columns: 260px 1fr; min-height:100vh;}
+        .app{display:grid; grid-template-columns: 1fr; min-height:100vh;}
 
         /* SIDEBAR */
         .sidebar{
             background:#fff; border-right:1px solid #eef0f4; padding:18px; display:flex; flex-direction:column; gap:18px;
-            position: relative; height: 100vh;
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            height: 100vh; 
+            width: 260px;
+            z-index: 50;
+            overflow-y: auto;
         }
         .sidebar-content{
             flex: 1; display: flex; flex-direction: column; gap: 18px; overflow: hidden;
@@ -127,9 +133,45 @@
             margin:80px auto 10px; text-align:center; max-width:900px;
             font-size:48px; line-height:1.1; margin:0 0 8px; color:var(--brand);
             transform: translateX(160px); margin-top: 90px; /* Offset by half of sidebar width (260px/2) */
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
+        .page-title.compact {
+            font-size: 24px;
+            margin: 0;
+            transform: translateX(0) translateY(-30px);
+            text-align: left;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(0);
+            z-index: 100;
+            background: var(--panel);
+            padding: 12px 24px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid #e2e8f0;
+        }
+        
         .page-subtitle{
-            margin:0 0 50px 0; color:var(--muted); text-align:center; /* Match the title offset */
+            margin:0 0 50px 0; color:var(--muted); text-align:center;
+            transition: opacity 0.5s ease, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .page-subtitle.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+        
+        .main {
+            margin-left: 260px; /* Account for fixed sidebar */
+            transition: padding-top 0.8s cubic-bezier(0.4, 0, 0.2, 1), padding-bottom 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .main.compact-mode {
+            padding-top: 80px;
+            padding-bottom: 120px; /* Space for fixed composer */
         }
         .avatar{width:50px; height:50px; border-radius:50%; background:#ffe8d6; display:flex; align-items:center; justify-content:center; font-weight:700}
 
@@ -151,6 +193,18 @@
         .composer{
             background:#fff; border:1px solid #eef0f4; border-radius:26px; box-shadow: var(--shadow);
             padding:16px; display:flex; align-items:center; gap:12px; margin-top: 12px;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .composer.fixed {
+            position: fixed;
+            bottom: 20px;
+            left: 300px; /* 260px sidebar + 40px margin */
+            right: 40px;
+            margin-top: 0;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
         }
         .composer .ask{
             flex:1; border:none; outline:none; font-size:16px; padding:14px 16px; 
@@ -162,10 +216,16 @@
         }
         .composer .icon-btn{
             height:44px; padding:0 14px; border-radius:12px; border:1px solid #e2e8f0; 
-            background:#fff; cursor:pointer;
+            background:#fff; cursor:pointer; transition: all 0.2s;
+        }
+        .composer .icon-btn.file-selected{
+            background: var(--primary); color: white; border-color: var(--primary);
         }
         .composer .send{
             background:#111827; color:#fff; border-color:#111827;
+        }
+        .composer .send.ready{
+            background: var(--primary); border-color: var(--primary);
         }
         .composer .send .send-icon{
             font-size: 30px;
@@ -220,41 +280,6 @@
             background: #16a34a; transform: translateY(-1px);
         }
 
-        /* TOP NOTIFICATION */
-        .top-notification {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 20px;
-            font-size: 14px;
-            font-weight: 500;
-            text-align: center;
-            transform: translateY(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            display: none;
-        }
-        .top-notification.show {
-            transform: translateY(0);
-            display: block;
-        }
-        .top-notification.success {
-            background-color: #059669;
-            color: white;
-        }
-        .top-notification.error {
-            background-color: #dc2626;
-            color: white;
-        }
-        .top-notification.info {
-            background-color: #0284c7;
-            color: white;
-        }
-        .top-notification.loading {
-            background-color: #7c3aed;
-            color: white;
-        }
         .loading {
             color: #92400e;
             background-color: #fef3c7;
@@ -337,6 +362,126 @@
             margin: 10px 0 4px 0;
         }
 
+        /* Chat Messages Section */
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .chat-message {
+            display: flex;
+            gap: 12px;
+            max-width: 100%;
+        }
+        .chat-message.user {
+            justify-content: flex-end;
+        }
+        .chat-message.user .message-bubble {
+            background: var(--primary);
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+        }
+        .chat-message.assistant .message-bubble {
+            background: #f1f5f9;
+            color: var(--ink);
+            border-radius: 18px 18px 18px 4px;
+        }
+        .message-bubble {
+            padding: 12px 16px;
+            max-width: 70%;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.4;
+            box-shadow: var(--shadow);
+        }
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .user-avatar {
+            background: var(--primary);
+            color: white;
+        }
+        .assistant-avatar {
+            background: #f1f5f9;
+            color: var(--primary);
+        }
+
+        /* Agent Logs Streaming Section */
+        .agent-logs-section {
+            background: var(--panel);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 24px;
+            display: none; /* Hidden by default, shown when processing */
+        }
+        .agent-logs-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brand);
+            margin-bottom: 16px;
+        }
+        .agent-logs-container {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            max-height: 240px;
+            overflow-y: auto;
+            font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Monaco, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .agent-log-entry {
+            margin: 4px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .log-timestamp {
+            color: var(--muted);
+            font-size: 11px;
+            min-width: 65px;
+        }
+        .log-message {
+            flex: 1;
+        }
+        .log-success {
+            color: var(--success);
+        }
+        .log-error {
+            color: var(--error);
+        }
+        .log-warning {
+            color: var(--warning);
+        }
+        .log-info {
+            color: var(--primary);
+        }
+        .log-running {
+            color: var(--primary-2);
+        }
+        .agent-logs-empty {
+            text-align: center;
+            color: var(--muted);
+            font-style: italic;
+            padding: 20px 0;
+        }
+
         .icon{width:18px; height:18px; display:inline-block; stroke:currentColor;}
 
         /* RESPONSIVE */
@@ -356,11 +501,151 @@
             .stage{padding:20px;}
             .page-title{font-size:24px;}
         }
+
+        /* Workflow Logs in Chat Messages */
+        .workflow-logs-container {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.03);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-2);
+        }
+
+        .workflow-status {
+            font-size: 13px;
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .workflow-toggle-btn {
+            background: var(--primary-2);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+
+        .workflow-toggle-btn:hover {
+            background: #0284c7;
+            transform: translateY(-1px);
+        }
+
+        .workflow-toggle-btn.expanded {
+            background: var(--muted);
+        }
+
+        .workflow-toggle-btn.expanded:hover {
+            background: #6b7280;
+        }
+
+        .workflow-details {
+            max-height: 120px;
+            overflow-y: auto;
+            border-top: 1px solid rgba(15, 23, 42, 0.1);
+            padding-top: 8px;
+            margin-top: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-2) transparent;
+        }
+
+        /* Custom scrollbar for webkit browsers */
+        .workflow-details::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .workflow-details::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .workflow-details::-webkit-scrollbar-thumb {
+            background: var(--primary-2);
+            border-radius: 3px;
+        }
+
+        .workflow-details::-webkit-scrollbar-thumb:hover {
+            background: #0284c7;
+        }
+
+        .workflow-log {
+            padding: 4px 8px;
+            margin: 2px 0;
+            font-size: 12px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.7);
+            border-left: 2px solid transparent;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .workflow-log.log-success {
+            border-left-color: var(--success);
+            background: rgba(34, 197, 94, 0.1);
+            color: #166534;
+        }
+
+        .workflow-log.log-error {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+            color: #991b1b;
+        }
+
+        .workflow-log.log-warning {
+            border-left-color: var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+            color: #92400e;
+        }
+
+        .workflow-log.log-running {
+            border-left-color: var(--primary-2);
+            background: rgba(14, 165, 233, 0.1);
+            color: var(--primary);
+        }
+
+        .workflow-log.log-info {
+            border-left-color: var(--muted);
+            color: var(--ink);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* NOTIFICATION SYSTEM */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            z-index: 1000;
+            color: var(--ink);
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
 <body>
     <!-- Top Notification -->
-    <div id="topNotification" class="top-notification"></div>
+    <div id="notification" class="notification"></div>
     
     <div class="app">
         <!-- SIDEBAR -->
@@ -387,7 +672,7 @@
             <div class="sidebar-bottom">
                 <!-- Output Files Section -->
                 <div class="output-files">
-                    <div class="output-files-title">📁 Output Files</div>
+                    <div class="output-files-title">📁 Downloads</div>
                     <div id="outputFilesList">
                         <div class="no-files">Nothing to download</div>
                     </div>
@@ -404,15 +689,35 @@
         <main class="main">
             <!-- User avatar in top right -->
             <div class="topbar"><div class="avatar">👤</div></div>
-            <h1 class="page-title">Hey! Can I help you with your <br/>📊Excel data?</h1>
-            <p class="page-subtitle">Upload your excel file and let's get started.</p>
+            <h1 id="pageTitle" class="page-title">Hey! Can I help you with your <br/>📊Excel data?</h1>
+            <p id="pageSubtitle" class="page-subtitle">Upload your excel file and let's get started.</p>
+
+            <!-- Chat Messages Section -->
+            <div id="chatMessages" class="chat-messages">
+                <!-- Messages will be added here dynamically -->
+            </div>
+
+            <!-- Agent Logs Streaming Section -->
+            <div id="agentLogsSection" class="agent-logs-section">
+                <div class="agent-logs-title">
+                    <span>🤖</span>
+                    <span>Agent Progress</span>
+                    <div style="margin-left: auto; font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center;">
+                        <button id="testLogsBtn" style="background: var(--primary-2); color: white; border: none; border-radius: 6px; padding: 4px 8px; font-size: 10px; cursor: pointer;" title="Test agent logs streaming">Test</button>
+                        <span>Live Updates</span>
+                    </div>
+                </div>
+                <div id="agentLogsContainer" class="agent-logs-container">
+                    <div class="agent-logs-empty">Waiting for agent to start...</div>
+                </div>
+            </div>
 
             <form id="uploadForm">
                 <!-- Hidden file input -->
-                <input type="file" id="file" name="file" accept=".xlsx,.xls" required style="display: none;">
+                <input type="file" id="file" name="file" accept=".xlsx,.xls" style="display: none;">
                 
                 <div class="composer">
-                    <textarea id="query" name="query" class="ask" placeholder="🟇 Ask anything you need..." required></textarea>
+                    <textarea id="query" name="query" class="ask" placeholder="🟇 Ask anything you need..."></textarea>
                     
                     <button type="button" id="fileBtn" class="icon-btn" title="Upload Excel File">
                         <span style="font-size: 18px;">🔗</span>
@@ -429,35 +734,230 @@
         const API_BASE_URL = 'http://127.0.0.1:8000';
         const uploadForm = document.getElementById('uploadForm');
         const uploadBtn = document.getElementById('uploadBtn');
-        const topNotification = document.getElementById('topNotification');
         const apiStatus = document.getElementById('apiStatus');
         const fileBtn = document.getElementById('fileBtn');
         const fileInput = document.getElementById('file');
+        const queryInput = document.getElementById('query');
         const outputFilesList = document.getElementById('outputFilesList');
+        const chatMessages = document.getElementById('chatMessages');
+        const pageTitle = document.getElementById('pageTitle');
+        const pageSubtitle = document.getElementById('pageSubtitle');
+        const mainElement = document.querySelector('.main');
+        const notification = document.getElementById('notification');
+        
+        // Track if transformation has happened
+        let hasTransformed = false;
+        
+        // Notification system - show clean text messages at top of page
+        function showNotification(message, duration = 4000) {
+            if (!notification) return;
+            
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            // Auto-hide after duration
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+        
+        // Debug: Check if all elements are found
+        // Elements check completed
         
         // Todo streaming variables
         const todoContent = document.getElementById('todoContent');
         let eventSource = null;
+
+        // Auto-scroll sidebar to show latest content
+        function scrollSidebarToLatest() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                // Smooth scroll to bottom of sidebar to show latest content
+                sidebar.scrollTo({
+                    top: sidebar.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Auto-scroll chat to bottom to show latest messages
+        function scrollChatToBottom() {
+            if (hasTransformed) {
+                const main = document.querySelector('.main');
+                if (main) {
+                    // FORCE scroll to absolute bottom - LATEST MESSAGES
+                    requestAnimationFrame(() => {
+                        main.scrollTop = main.scrollHeight;
+                    });
+                }
+            }
+        }
+
+        // Agent logs streaming variables
+        let agentLogsEventSource = null;
+        let agentLogsLineCount = 0; // Track number of lines processed to avoid re-reading on reconnect
+        let currentWorkflowContainer = null; // Reference to the current workflow container in the chat
+        let allWorkflowLogs = []; // Store all logs for complete tracking
+
+        // Beautiful page transformation function
+        function transformPageToCompact() {
+            if (hasTransformed) return; // Only transform once
+            hasTransformed = true;
+            
+            // 1. Transform title text and add compact class
+            pageTitle.innerHTML = 'PeaQock Manus';
+            
+            // 2. Add classes for animation
+            pageTitle.classList.add('compact');
+            pageSubtitle.classList.add('hidden');
+            mainElement.classList.add('compact-mode');
+            
+            // 3. Make composer fixed at bottom
+            const composer = document.querySelector('.composer');
+            composer.classList.add('fixed');
+            
+            // 4. Create a beautiful entrance animation for the chat
+            setTimeout(() => {
+                chatMessages.style.opacity = '1';
+                chatMessages.style.transform = 'translateY(0)';
+                // Auto-scroll to bottom after chat becomes visible
+                scrollChatToBottom();
+            }, 400);
+        }
+
+        // Test logs button click handler
+        testLogsBtn.addEventListener('click', async () => {
+            try {
+                testLogsBtn.disabled = true;
+                testLogsBtn.textContent = 'Testing...';
+                
+                // Start streaming first
+                await startAgentLogsStream(true);
+                
+                // Then trigger the test
+                const response = await fetch(`${API_BASE_URL}/test_agent_logs`, {
+                    method: 'POST',
+                });
+                
+                const result = await response.json();
+                console.log('Test logs result:', result);
+                
+            } catch (error) {
+                console.error('Test logs error:', error);
+                addAgentLogEntry('❌ Failed to test agent logs', 'error');
+            } finally {
+                setTimeout(() => {
+                    testLogsBtn.disabled = false;
+                    testLogsBtn.textContent = 'Test';
+                }, 2000);
+            }
+        });
 
         // File button click handler
         fileBtn.addEventListener('click', () => {
             fileInput.click();
         });
 
-        function showResponse(message, type = 'info') {
-            topNotification.className = `top-notification show ${type}`;
-            topNotification.innerHTML = message;
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            updateButtonStates();
+        });
+
+        // Query input handler
+        queryInput.addEventListener('input', (e) => {
+            updateButtonStates();
+        });
+
+        // Enter key handler to send message
+        queryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // Prevent default textarea behavior (new line)
+                
+                // Trigger form submission by clicking the submit button
+                const submitButton = document.getElementById('uploadBtn');
+                if (submitButton) {
+                    submitButton.click();
+                }
+            }
+            // Allow Shift+Enter for new lines in textarea
+        });
+
+        function updateButtonStates() {
+            const hasFile = fileInput.files && fileInput.files.length > 0;
+            const hasText = queryInput.value.trim().length > 0;
             
-            // Auto-hide after 4 seconds (except for loading messages)
-            if (type !== 'loading') {
-                setTimeout(() => {
-                    hideResponse();
-                }, 4000);
+            // Update file button state
+            if (hasFile) {
+                fileBtn.classList.add('file-selected');
+            } else {
+                fileBtn.classList.remove('file-selected');
+            }
+            
+            // Update send button state
+            if (hasFile && hasText) {
+                uploadBtn.classList.add('ready');
+            } else {
+                uploadBtn.classList.remove('ready');
             }
         }
 
-        function hideResponse() {
-            topNotification.className = 'top-notification';
+        // Chat message functions
+        function addChatMessage(message, type = 'user') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = `message-avatar ${type}-avatar`;
+            avatar.textContent = type === 'user' ? '👤' : '🤖';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = message;
+            
+            if (type === 'user') {
+                messageDiv.appendChild(bubble);
+                messageDiv.appendChild(avatar);
+            } else {
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(bubble);
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            
+            // FORCE scroll to bottom after DOM updates - SHOW LATEST MESSAGE
+            if (hasTransformed) {
+                // Use multiple methods to ensure scrolling works
+                setTimeout(() => {
+                    const main = document.querySelector('.main');
+                    if (main) {
+                        main.scrollTop = main.scrollHeight;
+                    }
+                    // Also scroll the window just in case
+                    window.scrollTo(0, document.body.scrollHeight);
+                }, 0);
+                
+                setTimeout(() => {
+                    const main = document.querySelector('.main');
+                    if (main) {
+                        main.scrollTop = main.scrollHeight;
+                    }
+                }, 50);
+                
+                setTimeout(() => {
+                    const main = document.querySelector('.main');
+                    if (main) {
+                        main.scrollTop = main.scrollHeight;
+                    }
+                }, 200);
+            }
+            
+            // Return the messageDiv so it can be modified
+            return messageDiv;
+        }
+
+        function clearQueryInput() {
+            queryInput.value = '';
+            updateButtonStates();
         }
 
         // Output Files Functions
@@ -500,6 +1000,7 @@
         function displayOutputFiles(files) {
             if (files.length === 0) {
                 outputFilesList.innerHTML = '<div class="no-files">Nothing to download</div>';
+                scrollSidebarToLatest();
                 return;
             }
 
@@ -514,11 +1015,13 @@
                 `;
             });
             outputFilesList.innerHTML = html;
+            // Auto-scroll sidebar to show latest downloads
+            scrollSidebarToLatest();
         }
         
         async function downloadFile(filename) {
             try {
-                showResponse(`Downloading ${filename}...`, 'loading');
+                showNotification(`Downloading ${filename}...`);
                 
                 const response = await fetch(`${API_BASE_URL}/download/${encodeURIComponent(filename)}`);
                 
@@ -534,14 +1037,14 @@
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
 
-                    showResponse(`✅ ${filename} downloaded successfully!`, 'success');
+                    showNotification(`✅ ${filename} downloaded successfully!`);
                 } else {
                     const errorText = await response.text();
-                    showResponse(`❌ Download Error: ${errorText}`, 'error');
+                    showNotification(`❌ Download Error: ${errorText}`);
                 }
             } catch (error) {
                 console.error('Download error:', error);
-                showResponse(`❌ Download Failed: ${error.message}`, 'error');
+                showNotification(`❌ Download Failed: ${error.message}`);
             }
         }
 
@@ -550,6 +1053,201 @@
                 apiStatus.innerHTML = `<span style="color: var(--success);">● Connected</span>`;
             } else {
                 apiStatus.innerHTML = `<span style="color: var(--error);">● ${status}</span>`;
+            }
+        }
+
+        // Agent Logs Streaming Functions
+        async function showAgentLogsSection() {
+            agentLogsSection.style.display = 'block';
+            agentLogsContainer.innerHTML = '<div class="agent-logs-empty">Starting agent workflow...</div>';
+            
+            // Reset line count for a new workflow
+            agentLogsLineCount = 0;
+            
+            // Clear server session to ensure clean start
+            try {
+                await fetch(`${API_BASE_URL}/clear_agent_logs_session`, { method: 'POST' });
+            } catch (error) {
+                console.error('Failed to clear agent logs session:', error);
+            }
+        }
+
+        function hideAgentLogsSection() {
+            agentLogsSection.style.display = 'none';
+            if (agentLogsEventSource) {
+                agentLogsEventSource.close();
+                agentLogsEventSource = null;
+            }
+        }
+
+        function addAgentLogEntry(message, type = 'info') {
+            // Remove empty placeholder if it exists
+            const emptyDiv = agentLogsContainer.querySelector('.agent-logs-empty');
+            if (emptyDiv) {
+                emptyDiv.remove();
+            }
+
+            const timestamp = new Date().toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+
+            const logEntry = document.createElement('div');
+            logEntry.className = 'agent-log-entry';
+            
+            logEntry.innerHTML = `
+                <span class="log-timestamp">${timestamp}</span>
+                <span class="log-message log-${type}">${message}</span>
+            `;
+
+            agentLogsContainer.appendChild(logEntry);
+            agentLogsContainer.scrollTop = agentLogsContainer.scrollHeight;
+        }
+
+        async function startAgentLogsStream(isNewWorkflow = false) {
+            if (agentLogsEventSource) {
+                agentLogsEventSource.close();
+            }
+
+            // Reset line count for a new workflow
+            if (isNewWorkflow) {
+                agentLogsLineCount = 0;
+                allWorkflowLogs = [];
+                
+                // Clear server session to ensure clean start
+                try {
+                    await fetch(`${API_BASE_URL}/clear_agent_logs_session`, { method: 'POST' });
+                } catch (error) {
+                    console.error('Failed to clear agent logs session:', error);
+                }
+            }
+            
+            // Use the current line count to avoid re-reading old messages
+            const streamUrl = `${API_BASE_URL}/stream_agent_logs?from_line=${agentLogsLineCount}`;
+            agentLogsEventSource = new EventSource(streamUrl);
+            
+            agentLogsEventSource.onopen = function() {
+                console.log('Agent logs stream connected from line:', agentLogsLineCount);
+            };
+            
+            agentLogsEventSource.onmessage = function(event) {
+                try {
+                    const message = event.data.trim();
+                    console.log('Received agent log:', message); // Debug logging
+                    
+                    if (message && message !== 'Connected to agent logs stream' && message !== 'Agent logs stream ended') {
+                        // Increment line count for each message received
+                        agentLogsLineCount++;
+                        
+                        // Determine log type based on message content
+                        let logType = 'info';
+                        if (message.includes('✅')) logType = 'success';
+                        else if (message.includes('❌')) logType = 'error';
+                        else if (message.includes('⏱')) logType = 'running';
+                        else if (message.includes('Warning') || message.includes('⚠️')) logType = 'warning';
+                        
+                        // Remove timestamp from display if it exists (we'll add our own)
+                        let displayMessage = message;
+                        const timestampRegex = /^\[\d{2}:\d{2}:\d{2}\]\s*/;
+                        if (timestampRegex.test(message)) {
+                            displayMessage = message.replace(timestampRegex, '');
+                        }
+                        
+                        // Store in all logs array
+                        allWorkflowLogs.push({ message: displayMessage, type: logType });
+                        
+                        // Add to the workflow details section (initially hidden)
+                        if (currentWorkflowContainer) {
+                            const detailsSection = currentWorkflowContainer.querySelector('.workflow-details');
+                            if (detailsSection) {
+                                const logEntry = document.createElement('div');
+                                logEntry.className = `workflow-log log-${logType}`;
+                                logEntry.textContent = displayMessage;
+                                detailsSection.appendChild(logEntry);
+                                
+                                // Auto-scroll to bottom if details are visible
+                                if (detailsSection.style.display !== 'none') {
+                                    detailsSection.scrollTop = detailsSection.scrollHeight;
+                                }
+                                
+                                // Also auto-scroll chat to show latest workflow updates
+                                setTimeout(() => {
+                                    scrollChatToBottom();
+                                }, 50);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error processing agent log message:', error);
+                }
+            };
+            
+            agentLogsEventSource.onerror = function(error) {
+                console.error('Agent logs stream error:', error);
+                
+                // Silent reconnection
+                setTimeout(() => {
+                    if (agentLogsEventSource && agentLogsEventSource.readyState === EventSource.CLOSED) {
+                        console.log('Attempting to reconnect agent logs stream from line:', agentLogsLineCount);
+                        startAgentLogsStream(false); // Not a new workflow, just reconnecting
+                    }
+                }, 3000);
+            };
+        }
+
+        function stopAgentLogsStream() {
+            if (agentLogsEventSource) {
+                agentLogsEventSource.close();
+                agentLogsEventSource = null;
+            }
+            
+            // Update the workflow status to completed
+            if (currentWorkflowContainer) {
+                const statusDiv = currentWorkflowContainer.querySelector('.workflow-status');
+                if (statusDiv) {
+                    statusDiv.innerHTML = '✅ Workflow completed successfully';
+                }
+                
+                // Add final completion log to details
+                const detailsSection = currentWorkflowContainer.querySelector('.workflow-details');
+                if (detailsSection) {
+                    const completionLog = document.createElement('div');
+                    completionLog.className = 'workflow-log log-success';
+                    completionLog.textContent = '✅ All tasks completed successfully!';
+                    detailsSection.appendChild(completionLog);
+                    
+                    // Auto-scroll chat to show completion
+                    setTimeout(() => {
+                        scrollChatToBottom();
+                    }, 50);
+                }
+            }
+        }
+
+        // Toggle workflow details visibility
+        function toggleWorkflowDetails(button) {
+            const container = button.parentElement;
+            const details = container.querySelector('.workflow-details');
+            const isHidden = details.style.display === 'none';
+            
+            if (isHidden) {
+                // Show details
+                details.style.display = 'block';
+                button.textContent = 'Hide workflows';
+                button.classList.add('expanded');
+                
+                // Scroll to bottom of logs and then scroll the section into view
+                setTimeout(() => {
+                    details.scrollTop = details.scrollHeight;
+                    details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            } else {
+                // Hide details
+                details.style.display = 'none';
+                button.textContent = 'See full workflows';
+                button.classList.remove('expanded');
             }
         }
 
@@ -657,6 +1355,8 @@
                     // Only update if there's actual content to show
                     if (formatted && formatted.trim()) {
                         todoContent.innerHTML = formatted;
+                        // Auto-scroll sidebar to show latest task updates
+                        scrollSidebarToLatest();
                     }
                 } catch (error) {
                     console.error('Error parsing todo data:', error);
@@ -681,65 +1381,135 @@
 
         uploadForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            console.log('Form submit event triggered');
             
             const fileInput = document.getElementById('file');
             const queryInput = document.getElementById('query');
             
-            if (!fileInput.files[0]) {
-                showResponse('Please select a file.', 'error');
-                return;
-            }
+            console.log('File input:', fileInput.files[0]);
+            console.log('Query input:', queryInput.value);
             
+            // Check if user entered a query
             if (!queryInput.value.trim()) {
-                showResponse('Please enter a query.', 'error');
+                console.log('No query entered - showing error');
+                showNotification('Please enter a query.');
                 return;
             }
 
+            const userMessage = queryInput.value.trim();
+            
+            // If no file is uploaded, show friendly message asking for Excel file
+            if (!fileInput.files[0]) {
+                console.log('No file selected - showing friendly message');
+                
+                // Add user message to chat
+                addChatMessage(userMessage, 'user');
+                
+                // Transform page to chat mode if first message
+                transformPageToCompact();
+                
+                // Clear the input
+                queryInput.value = '';
+                
+                // Add bot response asking for file
+                setTimeout(() => {
+                    const botMessage = "Hello! I am PeaQock Manus agent. Please upload your Excel file and I will answer all your questions about it. 📊";
+                    addChatMessage(botMessage, 'bot');
+                }, 500);
+                
+                return;
+            }
+
+            console.log('Starting upload process...');
+            
+            // Add user message to chat
+            addChatMessage(userMessage, 'user');
+            
+            // Trigger beautiful page transformation on first message
+            transformPageToCompact();
+            
+            // Add assistant message with integrated workflow
+            const assistantMessage = addChatMessage('Hello! I am going to start processing your request...', 'assistant');
+            
+            // Create a workflow logs container within the assistant message bubble
+            const workflowContainer = document.createElement('div');
+            workflowContainer.className = 'workflow-logs-container';
+            workflowContainer.innerHTML = `
+                <div class="workflow-status">🔄 The Agent is working...</div>
+                <button class="workflow-toggle-btn" onclick="toggleWorkflowDetails(this)">See full workflows</button>
+                <div class="workflow-details" style="display: none;"></div>
+            `;
+            
+            // Append to the message bubble, not the message div
+            const messageBubble = assistantMessage.querySelector('.message-bubble');
+            messageBubble.appendChild(workflowContainer);
+            
+            // Set up tracking for this workflow
+            currentWorkflowContainer = workflowContainer;
+            allWorkflowLogs = [];
+            
+            // Clear the input field
+            clearQueryInput();
+
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
-            formData.append('query', queryInput.value.trim());
+            formData.append('query', userMessage);
 
             uploadBtn.disabled = true;
             uploadBtn.innerHTML = `
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 7l-5-5-5 5"/></svg>
                 Processing...
             `;
-            showResponse('Uploading file and processing your query... This may take a few minutes.', 'loading');
+            showNotification('Uploading file and processing your query... This may take a few minutes.');
+            
+            // Start streaming agent logs
+            await startAgentLogsStream(true);
 
             try {
+                console.log('Making API request to:', `${API_BASE_URL}/upload`);
+                console.log('FormData contents - File:', formData.get('file')?.name, 'Query:', formData.get('query'));
+                
                 const response = await fetch(`${API_BASE_URL}/upload`, {
                     method: 'POST',
                     body: formData
                 });
 
+                console.log('Response status:', response.status, response.statusText);
                 const result = await response.json();
+                console.log('Response data:', result);
 
                 if (response.ok) {
-                    showResponse(`
-                        <strong>✅ Success!</strong><br>
-                        File uploaded and processed successfully.<br>
-                        <strong>File path:</strong> ${result.file_path}<br>
-                        <em>You can now download the results using the button below.</em>
-                    `, 'success');
+                    // Add assistant response to chat with personalized message
+                    const personalizedMessage = `✅ Great! Your query has been successfully processed! You can download the results from the downloads section in the sidebar.`;
+                    addChatMessage(personalizedMessage, 'assistant');
+                    
+                    showNotification('✅ Success! File processed successfully.');
                 } else {
-                    showResponse(`
-                        <strong>❌ Error:</strong><br>
-                        ${result.detail || 'Unknown error occurred'}
-                    `, 'error');
+                    // Add error message to chat
+                    addChatMessage('❌ Sorry, there was an error processing your file. Please try again.', 'assistant');
+                    
+                    showNotification(`❌ Error: ${result.detail || 'Unknown error occurred'}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showResponse(`
-                    <strong>❌ Network Error:</strong><br>
-                    Failed to connect to the API. Make sure the server is running on ${API_BASE_URL}<br>
-                    <strong>Error details:</strong> ${error.message}
-                `, 'error');
+                
+                // Add error message to chat
+                addChatMessage('❌ Sorry, I couldn\'t connect to the server. Please make sure it\'s running and try again.', 'assistant');
+                
+                showNotification(`❌ Network Error: Failed to connect to the API. ${error.message}`);
             } finally {
                 uploadBtn.disabled = false;
                 uploadBtn.innerHTML = `
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Upload & Process
+                    <span class="send-icon">⌲</span>
                 `;
+                
+                // Reset button states
+                updateButtonStates();
+                
+                // Stop agent logs stream after a short delay to capture final messages
+                setTimeout(() => {
+                    stopAgentLogsStream();
+                }, 2000);
             }
         });
 
@@ -762,6 +1532,9 @@
             if (eventSource) {
                 eventSource.close();
             }
+            if (agentLogsEventSource) {
+                agentLogsEventSource.close();
+            }
         });
 
         // Check if API is reachable on page load
@@ -775,12 +1548,7 @@
                 }
             } catch (error) {
                 updateApiStatus('Offline', false);
-                showResponse(`
-                    <strong>⚠️ Warning:</strong><br>
-                    Cannot reach the API at ${API_BASE_URL}<br>
-                    Make sure to start your FastAPI server first:<br>
-                    <pre>python api.py</pre>
-                `, 'error');
+                showNotification('⚠️ Warning: Cannot reach the API. Make sure to start your FastAPI server first: python api.py');
             }
         });
     </script>

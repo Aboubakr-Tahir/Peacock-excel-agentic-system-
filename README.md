@@ -53,4 +53,4 @@
 python api.py
 ```
 
-The agent will start an interactive session where you can ask questions and request analysis.
+The agent will start an interactive session where you can ask questions and request analysis about your excel file.

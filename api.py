@@ -1,13 +1,13 @@
-import shutil,uvicorn, logging, sys, os, webbrowser, time, signal, threading 
+import shutil, uvicorn, logging, sys, os, webbrowser, time
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from pathlib import Path
-from config import repo_path, output_path, todo
+from config import repo_path, output_path, todo, agent_logs
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-html_path = Path(__file__).parent / "test_api.html"
+html_path = Path(__file__).parent / "index.html"
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +18,11 @@ class UploadResponse(BaseModel):
 
 app = FastAPI(title="PeaQock Manus API", description="API for PeaQock_Manus Agent", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+# Clean up output folder on startup
+if output_path.exists():
+    shutil.rmtree(output_path)
+    logger.info("🗑️ Cleaned output folder on startup")
 
 
 @app.get("/")
@@ -160,7 +165,7 @@ def todo_stream():
     for i in range(50):
         if shutdown_flag:
             break        
-        content = todo.read_text(encoding="utf-8") if todo.exists() else "[Creating task list...]"
+        content = todo.read_text(encoding="utf-8") if todo.exists() else "Creating task list..."
         content = content or "[Todo list is being prepared...]"     
         if content != last_content or i % 20 == 0:
             yield f"data: {content.replace(chr(10), '\\n')}\n\n"
@@ -171,6 +176,109 @@ def todo_stream():
 async def stream_todo_md():
     """Stream todo.md file"""
     return StreamingResponse(todo_stream(), media_type="text/event-stream")
+
+# SSE endpoint to stream live updates of agent logs
+# Global variable to track current session logs
+current_session_logs = []
+
+def agent_logs_stream(from_line: int = 0):
+    """Stream agent_logs.txt content starting from a specific line"""
+    global shutdown_flag, current_session_logs
+    
+    # Create agent logs file if it doesn't exist
+    if not agent_logs.exists():
+        agent_logs.parent.mkdir(parents=True, exist_ok=True)
+        agent_logs.touch()
+    
+    # Send initial connection message only if starting from beginning
+    if from_line == 0:
+        yield f"data: Connected to agent logs stream\n\n"
+        # Reset session logs for new connections starting from 0
+        current_session_logs = []
+    
+    # Send any existing logs from the current session that the client hasn't seen
+    if from_line < len(current_session_logs):
+        for i in range(from_line, len(current_session_logs)):
+            yield f"data: {current_session_logs[i]}\n\n"
+    
+    # Track the file size to detect new content
+    last_size = 0
+    if agent_logs.exists():
+        last_size = agent_logs.stat().st_size
+    
+    for i in range(300):  # Allow longer streaming for agent logs
+        if shutdown_flag:
+            break
+            
+        try:
+            if agent_logs.exists():
+                current_size = agent_logs.stat().st_size
+                
+                # Only read new content if file has grown
+                if current_size > last_size:
+                    with open(agent_logs, 'r', encoding='utf-8') as f:
+                        # Skip to the last read position
+                        f.seek(last_size)
+                        new_content = f.read()
+                        
+                        if new_content.strip():
+                            # Split by lines and process each line
+                            lines = new_content.strip().split('\n')
+                            for line in lines:
+                                clean_line = line.strip()
+                                if clean_line:
+                                    # Add to session logs
+                                    current_session_logs.append(clean_line)
+                                    # Send to client
+                                    yield f"data: {clean_line}\n\n"
+                            
+                            last_size = current_size
+                            
+                elif current_size < last_size:
+                    # File was truncated (cleared), reset everything for new session
+                    last_size = 0
+                    current_session_logs = []
+                
+        except Exception as e:
+            error_msg = f"Error reading agent logs: {str(e)}"
+            print(error_msg)  # Log to console
+            yield f"data: {error_msg}\n\n"
+        
+        time.sleep(0.3)  # Check every 300ms for more responsive updates
+
+    yield f"data: Agent logs stream ended\n\n"
+
+@app.post("/clear_agent_logs_session")
+async def clear_agent_logs_session():
+    """Clear the current session logs (called when starting a new workflow)"""
+    global current_session_logs
+    current_session_logs = []
+    return {"status": "success", "message": "Agent logs session cleared"}
+
+@app.get("/stream_agent_logs")
+async def stream_agent_logs(from_line: int = 0):
+    """Stream agent logs file starting from a specific line"""
+    return StreamingResponse(agent_logs_stream(from_line), media_type="text/event-stream")
+
+@app.post("/test_agent_logs")
+async def test_agent_logs():
+    """Test endpoint to write some sample logs"""
+    try:
+        # Import here to avoid circular imports
+        from agent_runner import log_agent_message, clear_agent_logs
+        
+        clear_agent_logs()
+        log_agent_message("🧪 Testing agent logs system...")
+        log_agent_message("⏱ This is a running message")
+        log_agent_message("✅ This is a success message")
+        log_agent_message("❌ This is an error message")
+        log_agent_message("⚠️ This is a warning message")
+        log_agent_message("📝 This is an info message")
+        log_agent_message("🎉 Agent logs test completed!")
+        
+        return {"status": "success", "message": "Test logs written successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     print("API server starting at http://127.0.0.1:8000/")

@@ -1,13 +1,10 @@
 from agno.tools import tool, Toolkit
 import pandas as pd
-import json
-import os
-import shutil
-import zipfile
-import requests
+import json, subprocess, os, shutil, zipfile, requests, re
 from typing import Dict
 from dotenv import load_dotenv
-from config import repo_path, web_images, excel_path
+from config import repo_path, web_images, excel_path, tectonic_path
+from pathlib import Path
 
 load_dotenv()
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
@@ -328,11 +325,6 @@ def excel_parser():
     return ExcelParserTool()
 
 #LATEX tools
-from agno.tools import Toolkit, tool
-import subprocess
-import re
-from pathlib import Path
-from config import repo_path, tectonic_path
 
 @tool("latex_runner")
 def compile_latex(tex_file_path: str):
