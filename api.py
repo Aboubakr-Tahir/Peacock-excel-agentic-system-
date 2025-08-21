@@ -89,6 +89,61 @@ def download_output_file():
     logger.info(f"Serving first available file with original name: {original_filename}, media_type: {media_type}")
     return FileResponse(files[0], filename=original_filename, media_type=media_type)
 
+@app.get("/list_output_files")
+def list_output_files():
+    """List all files in the output directory with their details"""
+    if not output_path.exists():
+        return []
+    
+    files = []
+    try:
+        for file_path in output_path.iterdir():
+            if file_path.is_file():
+                file_info = {
+                    "name": file_path.name,
+                    "size": file_path.stat().st_size
+                }
+                files.append(file_info)
+        
+        return files
+    except Exception as e:
+        logger.error(f"Error listing output files: {str(e)}")
+        return []
+
+@app.get("/download/{filename}")
+def download_specific_file(filename: str):
+    """Download a specific file from the output directory"""
+    if not output_path.exists():
+        raise HTTPException(status_code=404, detail="Output folder not found")
+    
+    # Sanitize filename to prevent path traversal
+    safe_filename = Path(filename).name
+    file_path = output_path / safe_filename
+    
+    if not file_path.exists() or not file_path.is_file():
+        logger.warning(f"File not found: {safe_filename}")
+        raise HTTPException(status_code=404, detail=f"File '{safe_filename}' not found")
+    
+    # Define media types for different file extensions
+    media_types = {
+        '.pdf': 'application/pdf',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.xls': 'application/vnd.ms-excel',
+        '.csv': 'text/csv',
+        '.txt': 'text/plain',
+        '.html': 'text/html',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.doc': 'application/msword'
+    }
+    
+    ext = file_path.suffix.lower()
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(file_path, filename=safe_filename, media_type=media_type)
+
 # Global shutdown flag
 shutdown_flag = False
 
@@ -118,14 +173,7 @@ async def stream_todo_md():
     return StreamingResponse(todo_stream(), media_type="text/event-stream")
 
 if __name__ == "__main__":
+    print("API server starting at http://127.0.0.1:8000/")
+    uvicorn.run(app, host="127.0.0.1", port=8000, access_log=False)
     
-    def shutdown_handler(signum, frame):
-        set_shutdown_flag()
-        print("\n🛑 Shutting down...")
-        threading.Thread(target=lambda: (time.sleep(0.2), os._exit(0)), daemon=True).start()
-        raise KeyboardInterrupt()
-    
-    signal.signal(signal.SIGINT, shutdown_handler)
-    open_browser()
-    uvicorn.run(app, host="127.0.0.1", port=8000, access_log=False, timeout_keep_alive=1)
     
