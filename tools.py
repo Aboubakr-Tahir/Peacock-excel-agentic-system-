@@ -59,39 +59,6 @@ def initial_data_scout(file_path: str, output_path: str) -> str:
     except Exception as e:
         return f"Error during initial data scout: {e}"
 
-@tool(show_result=True)
-def google_images_search(query: str, num_images: int = 2):
-    if not SERPAPI_KEY:
-        return "Error: SERPAPI_KEY environment variable is not set. Please set it in your .env file or environment."
-    os.makedirs(web_images, exist_ok=True)
-    search_url = "https://serpapi.com/search.json"
-    params = {"q": query, "tbm": "isch", "ijn": "0", "api_key": SERPAPI_KEY}
-    try:
-        response = requests.get(search_url, params=params)
-        data = response.json()
-        if "images_results" not in data:
-            return f"API Error: {data.get('error', 'No images found')}" if "error" in data else f"No images found for {query}"
-        
-        results = []
-        for i, img in enumerate(data["images_results"][:num_images]):
-            img_url = img.get("original") or img.get("thumbnail")
-            if not img_url:
-                continue
-            try:
-                img_response = requests.get(img_url, timeout=10)
-                if img_response.status_code == 200:
-                    # Create a short, safe filename to avoid Windows path length limits
-                    safe_query = "".join(c for c in query.split(':')[0] if c.isalnum() or c in " _-").strip()[:50]
-                    img_path = os.path.join(web_images, f"{safe_query}_{i+1}.jpg")
-                    with open(img_path, "wb") as f:
-                        f.write(img_response.content)
-                    results.append(img_path)
-            except Exception:
-                continue
-        return f"Downloaded {len(results)} images for '{query}' in {web_images}/"
-    except Exception as e:
-        return f"Error searching for images: {e}"
-
 def _extract_charts(excel_file: str = None) -> Dict:
     """Extract charts using Spire.XLS"""
     try:

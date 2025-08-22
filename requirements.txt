@@ -127,6 +127,6 @@ xlwings==0.33.15
 nbformat
 kaleido
 serpapi
-xlsxwriter
 uvicorn
 weasyprint
+xlsxwriter

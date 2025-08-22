@@ -46,4 +46,4 @@ def run_preprocessing(manager):
         if os.path.isfile(summary_path):
             summary_exist = True
             log_agent_message("✅ The Preprocessing is Done\n")
-        log_agent_message("creating summary\n")
+        log_agent_message("i will create the summary now\n")

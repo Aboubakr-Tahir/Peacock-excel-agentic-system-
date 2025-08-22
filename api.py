@@ -21,8 +21,13 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 
 # Clean up output folder on startup
 if output_path.exists():
-    shutil.rmtree(output_path)
-    logger.info("🗑️ Cleaned output folder on startup")
+    try:
+        shutil.rmtree(output_path)
+        logger.info("🗑️ Cleaned output folder on startup")
+    except PermissionError:
+        logger.warning(f"⚠️ Could not clean output folder - it's being used by another process. Continuing anyway.")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not clean output folder: {e}. Continuing anyway.")
 
 
 @app.get("/")
@@ -55,8 +60,24 @@ def upload_excel(file: UploadFile = File(...), query: str = Form("")):
         from main import main_function
         result = main_function(user_query)
         logger.info(f"Main function executed successfully")
+        
+        # Create response with the final message
+        response_data = {"file_path": str(target_file)}
+        
+        # If we have a meaningful result message, include it
+        if result and result.strip():
+            response_data["message"] = result
+            response_data["has_custom_message"] = True
+        else:
+            response_data["message"] = "✅ Great! Your query has been successfully processed! You can download the results from the downloads section in the sidebar."
+            response_data["has_custom_message"] = False
+            
+        return response_data
     except Exception as e:
         logger.error(f"Error executing main function: {str(e)}")
+        return {"file_path": str(target_file), "message": f"❌ Error processing query: {str(e)}", "has_custom_message": True}
+    
+    # This should not be reached due to return statements above, but keeping for safety
     return UploadResponse(file_path=str(target_file))
 
 @app.get("/download")

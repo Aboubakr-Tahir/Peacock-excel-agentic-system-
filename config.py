@@ -67,6 +67,7 @@ class SummaryResponse(BaseModel):
     summary_path: str = Field(..., description="The absolute path where the summary file was saved.")
     
 class DeliveryResponse(BaseModel):
-    """The structured output from the Summary Agent after generating a summary."""
+    """The structured output from the Delivery Agent after selecting the correct file."""
     status: str = Field(..., description="The status of the correct file selecting, either 'success' or 'failure'.")
     chosen_path: str = Field(..., description="The absolute path to the chosen file.")
+    clickable_link: str = Field(default="", description="If applicable, a clickable link to access the content (for plots, this would be the server URL).")

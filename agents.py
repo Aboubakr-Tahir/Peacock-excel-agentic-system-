@@ -3,7 +3,7 @@ from tools import read_file_utf8, save_file_utf8, initial_data_scout, google_ima
 from agno.tools.python import PythonTools
 from agno.models.openai import OpenAIChat
 from config import OrchestratorDecision, CleanerResponse, FilterResponse, PlotResponse, WebImageWords, ReportResponse, SummaryResponse, DeliveryResponse
-from config import repo_path, scripts_path, profiler_notes_path, excel_path, summary_path, cleaned_excel, plot_output_path, queries_path, report_path, output_path
+from config import repo_path, scripts_path, profiler_notes_path, excel_path, summary_path, cleaned_excel, plot_output_path, queries_path, report_path
 from pathlib import Path
 import os
 
@@ -320,29 +320,6 @@ class AgentManager:
                 "- To avoid failing ALWAYS inspect the Excel file first using pandas"
             ]
         )
-        
-    def web_image_agent(self, summary_path: Path) :
-        return Agent(
-            name="ImageFetcher",
-            model=OpenAIChat(self.model_name, temperature=0.3),
-            tools=[self.toolset[0], self.toolset[1], google_images_search],
-            response_model=WebImageWords,
-            instructions = [
-                "You are a Keyword-Image Specialist Agent.",
-                f"Read the summary file at {summary_path} to extract exactly TWO keywords that represent the core meaning of the dataset.",
-                "CRUCIAL RULES:",
-                "1. Keywords must capture the MAIN THEME and BUSINESS VALUE.",
-                "2. Do NOT select raw column names or minor details.",
-                "3. For each keyword, create a visual description for image search.",
-                "   - Keyword1: symbolic image of the domain (e.g., 'a football ball picture in a stadium').",
-                "   - Keyword2: symbolic/conceptual image of the business purpose, **the word itself must appear prominently in the image**, and do NOT depict dashboards, charts, or spreadsheets.",
-                "     Instead, use conceptual or thematic imagery (e.g., medical symbols, abstract representations, or objects associated with the domain).",
-                "4. Output format must be:",
-                "   (Keyword1: visual description, Keyword2: visual description)",
-                "   Example: (Football: a football ball picture in a stadium, Sports Analytics: the words 'Sports Analytics' floating above a shadow football player or in a conceptual sports scene)",
-                "5. Use google_images_search('Keyword1: visual description, Keyword2: visual description', 2) to fetch 2 images closely matching the prompts."
-            ]
-        )
     
     def get_data_extractor_agent(self):
         return Agent(
@@ -502,23 +479,23 @@ class AgentManager:
             response_model=DeliveryResponse,
             #debug_mode=True,
             instructions = [
-                "You are a delivery agent that deliver the correct output to the user from a repo folder",
+                "You are a delivery agent that delivers the correct output to the user from a repo folder",
                 f"you will find all the files and folder in the {repo_path}",
-                f"1.your work is the read the user {query} and know wich file to deliver to the user",
+                f"1. your work is to read the user {query} and know which file to deliver to the user",
                 "possible queries:",
                     "'cleaner' handles: cleaning",
                     "'summerizer' handles: summaries",
                     "'plot' handles: plots requested by the user", 
                     "'filter' handles: quering on the excel file, aggregating, doing analytical operations on the excel (top 10 products, etc.)", 
                     "'reporter' handles: creating a pdf report",
-                f"2.if the user {query} is about:",
+                f"2. if the user {query} is about:",
                 f"cleaning -> select {cleaned_excel}",
                 f"summaries -> select {summary_path}",
                 f"creating a pdf report -> select {report_path}",
-                f"whenever the user asks for report and add something focus just on the report and selecty {report_path}",
-                f"if the user ask for plots -> select {os.path.join(plot_output_path, 'plot.html')}", 
-                f"filtering the excel file, aggregating, doing analytical operations on the excel -> select {queries_path}",              
-                "3.put the path of the selected file or folder in chosen_path",
-                "IMPORTANT: your choice should always priorities the report if found in the query"
+                f"whenever the user asks for report and add something focus just on the report and select {report_path}",
+                f"if the user ask for plots -> select {os.path.join(plot_output_path, 'plot.html')}",
+                f"filtering the excel file, aggregating, doing analytical operations on the excel -> select {queries_path}",
+                "3. put the path of the selected file or folder in chosen_path",
+                "IMPORTANT: your choice should always prioritize the report if found in the query"
             ]
         )

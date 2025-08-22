@@ -912,7 +912,13 @@
             
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
-            bubble.textContent = message;
+            
+            // Use innerHTML for assistant messages to support clickable links, textContent for user messages for security
+            if (type === 'assistant') {
+                bubble.innerHTML = message;
+            } else {
+                bubble.textContent = message;
+            }
             
             if (type === 'user') {
                 messageDiv.appendChild(bubble);
@@ -1479,9 +1485,20 @@
                 console.log('Response data:', result);
 
                 if (response.ok) {
-                    // Add assistant response to chat with personalized message
-                    const personalizedMessage = `✅ Great! Your query has been successfully processed! You can download the results from the downloads section in the sidebar.`;
-                    addChatMessage(personalizedMessage, 'assistant');
+                    // Use custom message from API if available, otherwise use default
+                    let personalizedMessage = `✅ Great! Your query has been successfully processed! You can download the results from the downloads section in the sidebar.`;
+                    
+                    if (result.message) {
+                        personalizedMessage = result.message;
+                    }
+                    
+                    // Convert URLs to clickable links
+                    const messageWithLinks = personalizedMessage.replace(
+                        /(https?:\/\/[^\s]+|file:\/\/\/[^\s]+)/g,
+                        '<a href="$1" target="_blank" style="color: var(--primary-2); text-decoration: underline;">$1</a>'
+                    );
+                    
+                    addChatMessage(messageWithLinks, 'assistant');
                     
                     showNotification('✅ Success! File processed successfully.');
                 } else {

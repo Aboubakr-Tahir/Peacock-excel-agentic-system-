@@ -3,7 +3,6 @@
 ### Prerequisites
 - Python 3.8 or higher
 - OpenAI API key
-- Serpapi API key
 - Tectonic
 
 ### Setup Instructions
@@ -31,10 +30,9 @@
    OPENAI_API_KEY=your_openai_api_key
    SERPAPI_KEY=your_serpapi_key
    ```
-5. **Get OpenAI and Serpapi API keys**
+5. **Get OpenAI API keys**
    ```
-   1. get your OpenAI api key from : https://platform.openai.com/api-keys
-   2. get your Serpapi api key from : https://serpapi.com/dashboard
+   get your OpenAI api key from : https://platform.openai.com/api-keys
    ```
 
 6. **Download Tectonic**
@@ -45,6 +43,7 @@
    4. Add that folder to your system PATH
    5. Check the instalation by runing this command ' C:\tectonic\tectonic.exe --version ' in your terminal
    6. You should see something like : tectonic 0.15.0Tectonic 0.15.0
+   7. Add the path you choose to the tectonic_path variable in the config.py file
    ```
 
 ## Usage
