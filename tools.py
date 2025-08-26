@@ -3,7 +3,7 @@ import pandas as pd
 import json, subprocess, os, shutil, zipfile, requests, re
 from typing import Dict
 from dotenv import load_dotenv
-from config import repo_path, web_images, excel_path, tectonic_path
+from config import repo_path, excel_path, tectonic_path
 from pathlib import Path
 
 load_dotenv()
@@ -11,8 +11,8 @@ SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
 @tool(show_result=True)
 def read_file_utf8(file_name: str) -> str:
+    """Read a file with UTF-8 encoding"""
     try:
-        # Handle both relative and absolute paths
         if os.path.isabs(file_name):
             file_path = file_name
         else:
@@ -25,8 +25,8 @@ def read_file_utf8(file_name: str) -> str:
 
 @tool(show_result=True)
 def save_file_utf8(file_name: str, contents: str) -> str:
+    """Save content to a file with UTF-8 encoding"""
     try:
-        # Handle both relative and absolute paths
         if os.path.isabs(file_name):
             file_path = file_name
         else:

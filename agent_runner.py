@@ -1,23 +1,24 @@
-import os, glob
-from config import excel_path, context_path, profiler_notes_path, todo, cleaned_excel, filter_output_path, plot_output_path, repo_path, images_path, workspace_path, queries_path, summary_path, report_path, agent_logs
-from config import CleanerResponse, FilterResponse, PlotResponse, ReportResponse, SummaryResponse
-import time
+import os, glob, time
+from config import (
+    excel_path, context_path, profiler_notes_path, todo, cleaned_excel,
+    filter_output_path, plot_output_path, repo_path, images_path,
+    workspace_path, queries_path, summary_path, report_path, agent_logs,
+    CleanerResponse, FilterResponse, PlotResponse, ReportResponse, SummaryResponse
+)
 
 def log_agent_message(message):
     """Write a message to both console and agent logs file"""
     print(message)
     try:
-        # Ensure the directory exists
         agent_logs.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(agent_logs, 'a', encoding='utf-8', buffering=1) as f:  # Line buffering
+        with open(agent_logs, 'a', encoding='utf-8', buffering=1) as f:
             timestamp = time.strftime("%H:%M:%S")
             log_entry = f"[{timestamp}] {message}\n"
             f.write(log_entry)
-            f.flush()  # Force write to disk
-            os.fsync(f.fileno())  # Force OS to write to disk
+            f.flush()
+            os.fsync(f.fileno())
             
-        # Small delay to ensure file system updates
         time.sleep(0.1)
     except Exception as e:
         print(f"Warning: Could not write to agent logs: {e}")
@@ -25,11 +26,10 @@ def log_agent_message(message):
 def clear_agent_logs():
     """Clear the agent logs file at the start of a new workflow"""
     try:
-        # Ensure the directory exists
         agent_logs.parent.mkdir(parents=True, exist_ok=True)
         
         with open(agent_logs, 'w', encoding='utf-8') as f:
-            f.write("")  # Clear the file
+            f.write("")
             f.flush()
             os.fsync(f.fileno())
     except Exception as e:
@@ -37,13 +37,11 @@ def clear_agent_logs():
 
 
 def run_agents(query, manager, decision):
-    # Clear logs at the start of a new workflow
     clear_agent_logs()
     log_agent_message(f"🎯 Agent to call: {decision.agent_to_call}")
     
     orchestrator = manager.get_orchestrator_agent(todo=todo)
     
-    # THE CLEANER AGENT
     if decision.agent_to_call == 'cleaner':
         log_agent_message("\n⏱ Running Cleaner Agent ...")
         cleaner = manager.get_cleaner_agent(task=decision.task_to_perform, query=query, context_json=context_path, context_notes=profiler_notes_path, excel_path=excel_path, cleaned_path=cleaned_excel)
@@ -54,8 +52,8 @@ def run_agents(query, manager, decision):
             except Exception as e:
                 log_agent_message(f"❌ Warning: Could not remove existing cleaned file: {e}")
         cleaning_response = cleaner.run()
+        
         if isinstance(cleaning_response.content, CleanerResponse) and cleaning_response.content.status == "success":
-            # Verify the cleaned file actually exists
             if os.path.isfile(cleaned_excel):
                 log_agent_message(f"✅ cleaner agent finished successfully.")
                 log_agent_message(f"Summary : {cleaning_response.content.summary}")
@@ -68,14 +66,12 @@ def run_agents(query, manager, decision):
             log_agent_message("❌ cleaner Agent failed or returned an unexpected response. Halting workflow. !!!")
             log_agent_message(f"Received: {cleaning_response.content}")
             return False
-
-    # THE FILTER AGENT   
     elif decision.agent_to_call == 'filter':
         log_agent_message("\n⏱ Running filter Agent ...")
         filter_agent = manager.get_filter_agent(context_notes=profiler_notes_path, task=decision.task_to_perform, cleaned_excel_path=cleaned_excel, output_path=filter_output_path)
         filter_response = filter_agent.run()
+        
         if isinstance(filter_response.content, FilterResponse) and filter_response.content.status == "success":
-            # Verify the filter output file exists
             patterns = ["*.csv", "*.xlsx", "*.xls", "*.txt"]
             if any(glob.glob(os.path.join(queries_path, pattern)) for pattern in patterns):
                 log_agent_message(f"✅ filter Agent finished successfully.")
@@ -89,14 +85,12 @@ def run_agents(query, manager, decision):
             log_agent_message("❌ filter Agent failed or returned an unexpected response. Halting workflow. !!!")
             log_agent_message(f"Received: {filter_response.content}")
             return False
-            
-    # THE PLOT AGENT
     elif decision.agent_to_call == 'plot':
         log_agent_message("\n⏱ Running Plot Agent ...")
         plot_agent = manager.get_plot_agent(context_notes=profiler_notes_path, task=decision.task_to_perform, excel_path=cleaned_excel, output_path=plot_output_path)
         plot_response = plot_agent.run()
+        
         if isinstance(plot_response.content, PlotResponse) and plot_response.content.status == "success":
-            # Verify the plot file exists
             if glob.glob(os.path.join(plot_output_path, "*.html")):
                 log_agent_message(f"✅ Plot Agent finished successfully.")
                 log_agent_message(f"Summary: {plot_response.content.summary}")
@@ -110,14 +104,12 @@ def run_agents(query, manager, decision):
             log_agent_message("❌ Plot Agent failed or returned an unexpected response. Halting workflow. !!!")
             log_agent_message(f"Received: {plot_response.content}")
             return False
-            
-    # THE SUMMARY AGENT
     elif decision.agent_to_call == 'summary':
         log_agent_message("\n⏱ Running Summary Agent ...")
         summary_agent = manager.get_summary_agent(repo_path=repo_path, excel_path=excel_path, profiler_notes_path=profiler_notes_path, workspace_path=workspace_path)
         summary_response = summary_agent.run()
+        
         if isinstance(summary_response.content, SummaryResponse) and summary_response.content.status == "success":
-            # Verify the summary file exists
             if os.path.isfile(summary_path):
                 log_agent_message(f"✅ Summary Agent finished successfully.")
                 orchestrator.run(f"✅ The task '{decision.task_to_perform}' has been completed successfully.")
@@ -135,8 +127,8 @@ def run_agents(query, manager, decision):
         log_agent_message("\n⏱ The Report is being generated by the Report Agent ...")
         report_agent = manager.get_report_agent(repo_path=repo_path, images_path=images_path)
         report_response = report_agent.run()
+        
         if isinstance(report_response.content, ReportResponse) and report_response.content.status == "success":
-            # Verify the report file exists
             if os.path.isfile(report_path):
                 log_agent_message(f"✅ Report Agent finished successfully.")
                 log_agent_message(f"Summary: {report_response.content.summary}")

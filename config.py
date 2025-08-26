@@ -1,6 +1,7 @@
-from pydantic import BaseModel , Field
+from pydantic import BaseModel, Field
 from pathlib import Path
-#Paths Configuration:
+
+# Path Configuration
 repo_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo")
 scripts_path = repo_path / "scripts"
 excel_path = repo_path / "data.xlsx"
@@ -17,32 +18,30 @@ media_json_path = repo_path / "media.json"
 images_path = repo_path / "images"
 charts_path = repo_path / "charts"
 latex_output_path = repo_path / "latex_outputs"
-tectonic_path= Path(r"C:\tectonic\tectonic.exe")
+tectonic_path = Path(r"C:\tectonic\tectonic.exe")
 workspace_path = repo_path / "workspace.json"
 queries_path = repo_path / "queries"
 summary_path = repo_path / "summary.txt"
 report_path = repo_path / "report.pdf"
 output_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\output")
 
-paths=[repo_path, scripts_path, excel_path, context_path, profiler_notes_path, review_notes_path, todo, cleaned_excel, filter_output_path, plot_output_path, web_images, media_json_path, images_path, charts_path, latex_output_path, tectonic_path, workspace_path, queries_path, summary_path]
-
-# Structured outputs Config:
+# Structured Output Models
 class OrchestratorDecision(BaseModel):
     """The decision made by the orchestrator on which agent to run next."""
     agent_to_call: str = Field(..., description="The name of the agent to call next from the available list: 'cleaner', 'filter', 'plot', 'summary', 'reporter'. If no task is left, return 'complete'.")
     task_to_perform: str = Field(..., description="The specific high-level task for the chosen agent to execute.")
-    reasoning: str = Field(..., description="A brief justification for choosing this agent for this task.")    
+    reasoning: str = Field(..., description="A brief justification for choosing this agent for this task.")
 
 class CleanerResponse(BaseModel):
     """The structured output from the Cleaner Agent after processing the data."""
     status: str = Field(..., description="The status of the cleaning operation used by Python tools to clean the excel with a python script, either 'success' or 'failure'.")
     summary: str = Field(..., description="A human-readable summary of all the cleaning actions that were performed using pythontools.")
 
-class FilterResponse(BaseModel) : 
-    status : str = Field(... , description="The status of the filtering/quering operation used by Python tools to query the excel with a python script, either 'success' or 'failure'.")
-    summary: str = Field(..., description="A human-readable summary of all the filtering/quering actions that were performed using pythontools.")
-    result : str = Field(... , description="Key numbers, counts, or findings from the filtering operation")
-    output_path : str = Field(... , description="absolute path where you outputed the filtered file")
+class FilterResponse(BaseModel):
+    status: str = Field(..., description="The status of the filtering/querying operation used by Python tools to query the excel with a python script, either 'success' or 'failure'.")
+    summary: str = Field(..., description="A human-readable summary of all the filtering/querying actions that were performed using python tools.")
+    result: str = Field(..., description="Key numbers, counts, or findings from the filtering operation")
+    output_path: str = Field(..., description="absolute path where you outputted the filtered file")
 
 class PlotResponse(BaseModel):
     status: str = Field(..., description="The status of the plotting operation ('success' or 'failure').")

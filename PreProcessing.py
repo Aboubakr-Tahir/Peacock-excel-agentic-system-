@@ -1,5 +1,8 @@
-from config import excel_path, context_path, profiler_notes_path, review_notes_path, repo_path, media_json_path, workspace_path, summary_path
 import os
+from config import (
+    excel_path, context_path, profiler_notes_path, review_notes_path,
+    repo_path, media_json_path, workspace_path, summary_path
+)
 from agent_runner import log_agent_message
 
 def run_preprocessing(manager):
@@ -23,12 +26,12 @@ def run_preprocessing(manager):
     analyst_response = analyst.run(f"Read the scout report from 'context.json' and the profiler notes from 'context_notes.txt'. Then, perform a deeper analysis on the file at {excel_path} and update the report at {context_path} with all findings.")
     log_agent_message("✅ Analyst First Pass Complete")
 
-    log_agent_message("Reviewing the preprocessing analysis ...")
+    log_agent_message("Reviewing the preprocessing analysis...")
     reviewer = manager.get_preprocessing_reviewer_agent()
     reviewer_response = reviewer.run(f"Review the JSON report at 'context.json' for logical errors and save your findings to '{review_notes_path}'.")
     log_agent_message("✅ Review Complete")
 
-    log_agent_message("Running Analyst Agent (Correction Pass) ...")
+    log_agent_message("Running Analyst Agent (Correction Pass)...")
     if review_notes_path.exists() and review_notes_path.stat().st_size > 0:
         correction_response = analyst.run(f"A review of your previous work has been completed. The notes are in 'review_notes.txt'. Please read the notes and correct the JSON report at 'context.json' accordingly.")
         log_agent_message("✅ Full Inspection and Correction Workflow Complete")

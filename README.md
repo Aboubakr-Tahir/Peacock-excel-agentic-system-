@@ -37,7 +37,7 @@
 
 6. **Download Tectonic**
    ```
-   1. visit this link https://github.com/tectonic-typesetting/tectonic/releases?page=2
+   1. visit this link: https://github.com/tectonic-typesetting/tectonic/releases?page=2
    2. Under Asset download: tectonic-x86_64-pc-windows-msvc.zip
    3. Extract it somewhere permanent like: C:\tectonic\tectonic.exe
    4. Add that folder to your system PATH

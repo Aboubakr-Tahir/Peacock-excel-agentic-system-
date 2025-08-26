@@ -1,11 +1,20 @@
+import os
+from pathlib import Path
 from agno.agent import Agent
-from tools import read_file_utf8, save_file_utf8, initial_data_scout, google_images_search, excel_structure_parser, extract_and_analyze_charts_tool, extract_and_analyze_images_tool, analyze_extracted_image_content_tool, compile_latex, escape_latex, proper_write_latex, list_available_visualizations
 from agno.tools.python import PythonTools
 from agno.models.openai import OpenAIChat
-from config import OrchestratorDecision, CleanerResponse, FilterResponse, PlotResponse, WebImageWords, ReportResponse, SummaryResponse, DeliveryResponse
-from config import repo_path, scripts_path, profiler_notes_path, excel_path, summary_path, cleaned_excel, plot_output_path, queries_path, report_path
-from pathlib import Path
-import os
+from tools import (
+    read_file_utf8, save_file_utf8, initial_data_scout, excel_structure_parser,
+    extract_and_analyze_charts_tool, extract_and_analyze_images_tool,
+    analyze_extracted_image_content_tool, compile_latex, escape_latex,
+    proper_write_latex, list_available_visualizations
+)
+from config import (
+    OrchestratorDecision, CleanerResponse, FilterResponse, PlotResponse,
+    ReportResponse, SummaryResponse, DeliveryResponse, repo_path, scripts_path,
+    profiler_notes_path, excel_path, summary_path, cleaned_excel,
+    plot_output_path, queries_path, report_path
+)
 
 class AgentManager:
     def __init__(self, model_name: str):
@@ -15,15 +24,43 @@ class AgentManager:
         self.context_note_path = profiler_notes_path
         self.excel_path = excel_path
         self.scripts_path.mkdir(exist_ok=True)
-        self.toolset = [PythonTools(base_dir=self.scripts_path), read_file_utf8, save_file_utf8, google_images_search, excel_structure_parser, extract_and_analyze_charts_tool, extract_and_analyze_images_tool, analyze_extracted_image_content_tool, compile_latex, escape_latex, proper_write_latex]
+        self.toolset = [
+            PythonTools(base_dir=self.scripts_path),
+            read_file_utf8, save_file_utf8, excel_structure_parser,
+            extract_and_analyze_charts_tool, extract_and_analyze_images_tool,
+            analyze_extracted_image_content_tool, compile_latex, escape_latex,
+            proper_write_latex
+        ]
 
+    def get_data_extractor_agent(self):
+        return Agent(
+            name="Data_Extractor_Agent",
+            model=OpenAIChat(self.model_name, temperature=0.0),
+            tools=self.toolset,
+            #debug_mode=True,
+            instructions=[
+                f"You are an Excel analysis agent. Your Excel file is at: {self.excel_path}",
+                "Your job is to extract images and charts from the Excel file and save them to folders INSIDE the repo directory.",
+                "WORKFLOW - Follow these steps in order:",
+                "1. Call save_to_file_and_run() to create a simple Python script that creates an empty JSON file",
+                "2. Call excel_structure_parser() to analyze the Excel structure",
+                "3. Call extract_and_analyze_charts_tool() to extract charts (saves to repo/charts/ and results to media.json)",
+                "4. Call extract_and_analyze_images_tool() to extract images (saves to repo/images/ and results to media.json)",
+                f"IMPORTANT: All files will be automatically saved inside the repo directory: {self.repo_path}",
+                f"- Images will be saved to: {self.repo_path}/images/",
+                f"- Charts will be saved to: {self.repo_path}/charts/",
+                f"- Analysis results will be saved to: {self.repo_path}/media.json",
+                "5. When finished, respond with a brief summary of what was extracted"
+            ]
+        )
+        
     def get_scout_agent(self) -> Agent:
         return Agent( name="scout_agent", model=OpenAIChat(self.model_name , temperature=0.0), tools=[initial_data_scout], instructions=["You are a script-running assistant.", "Your only job is to call the initial_data_scout tool with the file paths you are given."])
 
     def get_profiler_agent(self) -> Agent:
         return Agent( 
             name="profiler_agent",
-            model=OpenAIChat(self.model_name , temperature=0.0),
+            model=OpenAIChat(self.model_name, temperature=0.0),
             tools=self.toolset,
             instructions=[
                 "You are a Business Intelligence Analyst. Your goal is to understand and document the business context of a dataset from an Excel file.",
@@ -70,6 +107,24 @@ class AgentManager:
                 "2. *Scrutinize each issue*: Look for illogical conclusions. (e.g., flagging a 'Description' column for being an 'Incorrect Data Type' because it contains text is a logical flaw).",
                 "3. *Write your findings*: Document any flaws you find. If there are no flaws, state that the report is logically consistent.",
                 "4. *Save the review*: Use save_file_utf8 to save your findings to the specified review file path."
+            ]
+        )
+        
+    def get_workspace_agent(self, context_note_path: Path, context_path: Path, repo_path: Path, media_json_path: Path):
+        return Agent(
+            name="Workspace_Agent",
+            model=OpenAIChat(self.model_name, temperature=0.0),
+            tools=self.toolset,
+            #debug_mode=True,
+            instructions=[
+                "you are a generale context agent your work is to use save_file_utf8 to create a workspace.json file"
+                "this file is used to store all relevant context information for the current workspace"
+                "WORKFLOW:"
+                "1. use save_file_utf8 to initiate the workspace.json file"
+                f"2. use read_file_utf8 to read the context_notes file located at {context_note_path} it contain all the columns analysis, then use save_file_utf8 to save the relevant information to workspace.json",
+                f"3. use read_file_utf8 to read the context file located at {context_path} it contain all the anomalies and problems found by the profiler agent, then use save_file_utf8 to append the relevant information to workspace.json",
+                f"4. use read_file_utf8 to read the media file located at {media_json_path} it contain all the media information, then use save_file_utf8 to append the relevant information to workspace.json",
+                f"5. make sure that the json file is well structured and save it in the {repo_path} folder as workspace.json"
             ]
         )
         
@@ -236,6 +291,27 @@ class AgentManager:
                 "3. Never drop low_variability columns they might contain important informations , unless the user had specified it or you have no other option and it must be dropped."
             ]
         )
+        
+    def get_summary_agent(self, repo_path: Path, excel_path: Path, profiler_notes_path: Path, workspace_path: Path):
+        return Agent(
+            name="Summary_Agent",
+            model=OpenAIChat(self.model_name, temperature=0.4),
+            tools=self.toolset,
+            response_model=SummaryResponse,
+            #debug_mode=True,
+            instructions = [
+                "You are an autonomous Summarization Specialist agent that creates a deep and narrative-style summary from the analyses done earlier.",
+                f"Your job is to read all the content you will find in the {repo_path} to understand the exact content of the Excel file.",
+                f"Start by reading the {excel_path} file and then focus more on those two files: {profiler_notes_path} and {workspace_path}.",
+                "Write the output as ONE long, flowing paragraph, like an executive summary. Do NOT use bullet points, headers, or markdown formatting.",
+                "The paragraph must describe: the most relevant sheet (name, rows, columns, and main purpose), the important columns and what they represent, any anomalies or trends, the presence of images/charts and what they illustrate, and finally why the file is important and how it can be valuable if improved with more consistent data.",
+                f"Save this narrative summary in a txt file named 'summary.txt' inside {repo_path}.",
+                "never stop improving, and never use the files name so instead of saying 'the food_sale excel' just say 'the excel file'",
+                "RESPONSE FORMAT:",
+                "- status: 'success' if summary.txt file was generated successfully, 'failure' if any errors occurred",
+                f"- summary_path: Full path to the generated summary file (should be {summary_path})",
+            ]
+        )
                 
     def get_filter_agent(self, task: str, cleaned_excel_path: Path, output_path: Path , context_notes : Path):
         return Agent(
@@ -320,49 +396,9 @@ class AgentManager:
                 "- To avoid failing ALWAYS inspect the Excel file first using pandas"
             ]
         )
-    
-    def get_data_extractor_agent(self):
-        return Agent(
-            name="Data_Extractor_Agent",
-            model=OpenAIChat(self.model_name, temperature=0.0),
-            tools=self.toolset,
-            #debug_mode=True,
-            instructions=[
-                f"You are an Excel analysis agent. Your Excel file is at: {self.excel_path}",
-                "Your job is to extract images and charts from the Excel file and save them to folders INSIDE the repo directory.",
-                "WORKFLOW - Follow these steps in order:",
-                f"1. Call save_to_file_and_run() to create a simple Python script that creates an empty JSON file",
-                f"2. Call excel_structure_parser() to analyze the Excel structure (this will use the default excel path)",
-                f"3. Call extract_and_analyze_charts_tool() to extract charts (saves to repo/charts/ and results to media.json)",
-                f"4. Call extract_and_analyze_images_tool() to extract images (saves to repo/images/ and results to media.json)",
-                f"IMPORTANT: All files will be automatically saved inside the repo directory: {self.repo_path}",
-                f"- Images will be saved to: {self.repo_path}/images/",
-                f"- Charts will be saved to: {self.repo_path}/charts/",
-                f"- Analysis results will be saved to: {self.repo_path}/media.json",
-                "5. When finished, respond with a brief summary of what was extracted"
-            ]
-        )
-
-    def get_workspace_agent(self, context_note_path: Path, context_path: Path, repo_path: Path, media_json_path: Path):
-        return Agent(
-            name="Workspace_Agent",
-            model=OpenAIChat(self.model_name, temperature=0.0),
-            tools=self.toolset,
-            #debug_mode=True,
-            instructions=[
-                "you are a generale context agent your work is to use save_file_utf8 to create a workspace.json file"
-                "this file is used to store all relevant context information for the current workspace"
-                "WORKFLOW:"
-                "1. use save_file_utf8 to initiate the workspace.json file"
-                f"2. use read_file_utf8 to read the context_notes file located at {context_note_path} it contain all the columns analysis, then use save_file_utf8 to save the relevant information to workspace.json",
-                f"3. use read_file_utf8 to read the context file located at {context_path} it contain all the anomalies and problems found by the profiler agent, then use save_file_utf8 to append the relevant information to workspace.json",
-                f"4. use read_file_utf8 to read the media file located at {media_json_path} it contain all the media information, then use save_file_utf8 to append the relevant information to workspace.json",
-                f"5. make sure that the json file is well structured and save it in the {repo_path} folder as workspace.json"
-            ]
-        )
 
     def get_report_agent(self, repo_path: Path, images_path: Path):
-        report_toolset = [read_file_utf8, save_file_utf8, google_images_search, excel_structure_parser, extract_and_analyze_charts_tool, extract_and_analyze_images_tool, analyze_extracted_image_content_tool, compile_latex, escape_latex, proper_write_latex, list_available_visualizations]
+        report_toolset = [read_file_utf8, save_file_utf8, excel_structure_parser, extract_and_analyze_charts_tool, extract_and_analyze_images_tool, analyze_extracted_image_content_tool, compile_latex, escape_latex, proper_write_latex, list_available_visualizations]
         return Agent(
             name="Report_Agent",
             model=OpenAIChat(self.model_name, temperature=0.0),
@@ -448,27 +484,6 @@ class AgentManager:
                 "- If LaTeX compilation fails, return status='failure' with error details",
                 "- Always provide meaningful feedback about what succeeded or failed"
                 
-            ]
-        )
-    
-    def get_summary_agent(self, repo_path: Path, excel_path: Path, profiler_notes_path: Path, workspace_path: Path):
-        return Agent(
-            name="Summary_Agent",
-            model=OpenAIChat(self.model_name, temperature=0.4),
-            tools=self.toolset,
-            response_model=SummaryResponse,
-            #debug_mode=True,
-            instructions = [
-                "You are an autonomous Summarization Specialist agent that creates a deep and narrative-style summary from the analyses done earlier.",
-                f"Your job is to read all the content you will find in the {repo_path} to understand the exact content of the Excel file.",
-                f"Start by reading the {excel_path} file and then focus more on those two files: {profiler_notes_path} and {workspace_path}.",
-                "Write the output as ONE long, flowing paragraph, like an executive summary. Do NOT use bullet points, headers, or markdown formatting.",
-                "The paragraph must describe: the most relevant sheet (name, rows, columns, and main purpose), the important columns and what they represent, any anomalies or trends, the presence of images/charts and what they illustrate, and finally why the file is important and how it can be valuable if improved with more consistent data.",
-                f"Save this narrative summary in a txt file named 'summary.txt' inside {repo_path}.",
-                "never stop improving, and never use the files name so instead of saying 'the food_sale excel' just say 'the excel file'",
-                "RESPONSE FORMAT:",
-                "- status: 'success' if summary.txt file was generated successfully, 'failure' if any errors occurred",
-                f"- summary_path: Full path to the generated summary file (should be {summary_path})",
             ]
         )
 
