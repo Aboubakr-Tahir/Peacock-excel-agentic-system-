@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from pathlib import Path
 
 # Path Configuration
-repo_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\repo")
+repo_path = Path(r"C:\Users\PC\Desktop\projects\PeaQock_Manus\repo")
 scripts_path = repo_path / "scripts"
 excel_path = repo_path / "data.xlsx"
 context_path = repo_path / "context.json"
@@ -23,7 +23,7 @@ workspace_path = repo_path / "workspace.json"
 queries_path = repo_path / "queries"
 summary_path = repo_path / "summary.txt"
 report_path = repo_path / "report.pdf"
-output_path = Path(r"C:\Users\MELIODAS\Desktop\PeaQock_Manus\output")
+output_path = Path(r"C:\Users\PC\Desktop\projects\PeaQock_Manus\output")
 
 # Structured Output Models
 class OrchestratorDecision(BaseModel):

@@ -18,17 +18,16 @@ def main_function(query: str):
     log_agent_message("⏱ Preprocessing ...")
     run_preprocessing(manager)
 
-    log_agent_message("⏱ Running Planner Agent: creating todo.md ...")
+    log_agent_message("⏱ Planning steps ...")
     planner = manager.get_planner_agent(query=query, todo=todo).run()
-    log_agent_message("✅ Planner Agent finished You can follow the steps of my plan in the Task Progress section\n⏱ Orchestrator is now running the plan ...")
+    log_agent_message("✅The plan has been created succefully ,  You can follow the steps of my plan in the Task Progress section\n⏱ Running first step ...")
     orchestrator = manager.get_orchestrator_agent(todo=todo)
     
     while True:
-        log_agent_message("⏱ Orchestrator is deciding the next step ...")
         decision_response = orchestrator.run("Read the todo.md file and decide the next step.")
         
         if not isinstance(decision_response.content, OrchestratorDecision):
-            log_agent_message(f"❌ Orchestrator failed to make a valid decision. Halting.\nReceived: {decision_response.content}")
+            log_agent_message(f"❌ failed to make a valid decision. Halting.\nReceived: {decision_response.content}")
             break
             
         decision = decision_response.content
@@ -37,8 +36,6 @@ def main_function(query: str):
             log_agent_message("✅ All tasks are complete. Workflow finished.")
             break
         else:
-            log_agent_message(f"Orchestrator Decision: Call agent '{decision.agent_to_call}' for task: '{decision.task_to_perform}'")
-            log_agent_message(f"Reasoning: {decision.reasoning}")
             agent_success = run_agents(query, manager, decision)
             if not agent_success:
                 log_agent_message("❌ Agent execution failed.")
