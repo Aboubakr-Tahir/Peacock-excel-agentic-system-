@@ -1,0 +1,25 @@
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent.parent
+repo_path = BASE_DIR / "repo"
+todo = repo_path / "todo.md"
+output_path = BASE_DIR / "output"
+images_path = repo_path / "images"
+charts_path = repo_path / "charts"
+excel_path = repo_path / "data.xlsx"
+scripts_path = repo_path / "scripts"
+queries_path = repo_path / "queries"
+web_images = repo_path / "web_images"
+plot_output_path = repo_path / "plots"
+report_path = repo_path / "report.pdf"
+summary_path = repo_path / "summary.txt"
+agent_logs = repo_path / "agent_logs.txt"
+context_path = repo_path / "context.json"
+media_json_path = repo_path / "media.json"
+filter_output_path = repo_path / "queries"
+workspace_path = repo_path / "workspace.json"
+latex_output_path = repo_path / "latex_outputs"
+cleaned_excel = repo_path / "cleaned_excel.xlsx"
+review_notes_path = repo_path / "review_notes.txt"
+profiler_notes_path = repo_path / "context_notes.txt"
+tectonic_path = Path(r"C:\tectonic\tectonic.exe")

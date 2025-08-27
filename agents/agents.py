@@ -3,18 +3,19 @@ from pathlib import Path
 from agno.agent import Agent
 from agno.tools.python import PythonTools
 from agno.models.openai import OpenAIChat
-from tools import (
+from core.tools import (
     read_file_utf8, save_file_utf8, initial_data_scout, excel_structure_parser,
     extract_and_analyze_charts_tool, extract_and_analyze_images_tool,
     analyze_extracted_image_content_tool, compile_latex, escape_latex,
-    proper_write_latex, list_available_visualizations
-)
-from config import (
-    OrchestratorDecision, CleanerResponse, FilterResponse, PlotResponse,
-    ReportResponse, SummaryResponse, DeliveryResponse, repo_path, scripts_path,
-    profiler_notes_path, excel_path, summary_path, cleaned_excel,
-    plot_output_path, queries_path, report_path
-)
+    proper_write_latex, list_available_visualizations)
+
+from core.paths import (
+    repo_path, scripts_path, profiler_notes_path, excel_path,
+    summary_path, cleaned_excel, plot_output_path, queries_path, report_path)
+
+from core.Structured_Output import (
+    OrchestratorDecision, CleanerResponse, FilterResponse,
+    PlotResponse, ReportResponse, SummaryResponse, DeliveryResponse)
 
 class AgentManager:
     def __init__(self, model_name: str):
@@ -23,7 +24,7 @@ class AgentManager:
         self.scripts_path = scripts_path
         self.context_note_path = profiler_notes_path
         self.excel_path = excel_path
-        self.scripts_path.mkdir(exist_ok=True)
+        self.scripts_path.mkdir(parents=True, exist_ok=True)
         self.toolset = [
             PythonTools(base_dir=self.scripts_path),
             read_file_utf8, save_file_utf8, excel_structure_parser,

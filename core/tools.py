@@ -1,13 +1,9 @@
 from agno.tools import tool, Toolkit
-import pandas as pd
 import json, subprocess, os, shutil, zipfile, requests, re
+import pandas as pd
 from typing import Dict
-from dotenv import load_dotenv
-from config import repo_path, excel_path, tectonic_path
 from pathlib import Path
-
-load_dotenv()
-SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+from core.paths import repo_path, excel_path, tectonic_path
 
 @tool(show_result=True)
 def read_file_utf8(file_name: str) -> str:
@@ -362,7 +358,7 @@ def proper_write_latex(latex_code: str, file_name: str = "latex.tex") -> str:
 def list_available_visualizations() -> str:
     """List all available plots, charts, and images for inclusion in reports"""
     try:
-        from config import repo_path, charts_path, images_path, plot_output_path, web_images
+        from core import repo_path, charts_path, images_path, plot_output_path, web_images
         
         available_files = {
             "plots": [],
@@ -487,4 +483,3 @@ def list_available_visualizations() -> str:
         
     except Exception as e:
         return f"Error listing visualizations: {e}"
-

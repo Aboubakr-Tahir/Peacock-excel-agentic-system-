@@ -1,31 +1,5 @@
 from pydantic import BaseModel, Field
-from pathlib import Path
 
-# Path Configuration
-repo_path = Path(r"C:\Users\PC\Desktop\projects\PeaQock_Manus\repo")
-scripts_path = repo_path / "scripts"
-excel_path = repo_path / "data.xlsx"
-context_path = repo_path / "context.json"
-profiler_notes_path = repo_path / "context_notes.txt"
-review_notes_path = repo_path / "review_notes.txt"
-todo = repo_path / "todo.md"
-agent_logs = repo_path / "agent_logs.txt"
-cleaned_excel = repo_path / "cleaned_excel.xlsx"
-filter_output_path = repo_path / "queries"
-plot_output_path = repo_path / "plots"
-web_images = repo_path / "web_images"
-media_json_path = repo_path / "media.json"
-images_path = repo_path / "images"
-charts_path = repo_path / "charts"
-latex_output_path = repo_path / "latex_outputs"
-tectonic_path = Path(r"C:\tectonic\tectonic.exe")
-workspace_path = repo_path / "workspace.json"
-queries_path = repo_path / "queries"
-summary_path = repo_path / "summary.txt"
-report_path = repo_path / "report.pdf"
-output_path = Path(r"C:\Users\PC\Desktop\projects\PeaQock_Manus\output")
-
-# Structured Output Models
 class OrchestratorDecision(BaseModel):
     """The decision made by the orchestrator on which agent to run next."""
     agent_to_call: str = Field(..., description="The name of the agent to call next from the available list: 'cleaner', 'filter', 'plot', 'summary', 'reporter'. If no task is left, return 'complete'.")
